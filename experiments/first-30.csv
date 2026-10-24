@@ -1,0 +1,31 @@
+n,problem_id,type,app,origin,in_sregym_lite,in_pilot,expected_difficulty,typed_enough_prediction,why_included
+1,revoke_auth_mongodb-1,Security Failure,hotel-reservation,AIOpsLab,no,yes,medium,no,pilot; structural typed-vs-shell case
+2,search_rate_retry_collapse_hotel_reservation,Metastable Failure,hotel-reservation,New,yes,yes,hard,maybe,pilot; Lite
+3,service_dns_resolution_failure_social_network,Network Failure,social-network,New,yes,yes,hard,no,pilot; Lite
+4,configmap_drift_hotel_reservation,Misconfiguration Failure,hotel-reservation,New,no,yes,easy,yes,pilot
+5,duplicate_pvc_mounts_hotel_reservation,Cloud Management System Failure,hotel-reservation,New,no,yes,easy,yes,pilot
+6,node_conntrack_exhaustion_hotel_reservation,Network Failure (OS level),hotel-reservation,New,no,probe,hard,no,24 Oct probe; OS level
+7,network_policy_block,Network Failure,hotel-reservation,New,yes,no,medium,no,Lite
+8,namespace_memory_limit,Cloud Management System Failure,hotel-reservation,New,yes,no,easy,no,Lite
+9,service_wrong_pod_selection_hotel_reservation,Misconfiguration Failure,hotel-reservation,New,yes,no,medium,no,Lite
+10,mutating_webhook_resource_limits_social_network,Misconfiguration Failure,social-network,New,yes,no,hard,no,Lite; hidden cause
+11,finalizer_deadlock_controller_hotel_reservation,Cloud Management (RBAC) [our label],hotel-reservation,New,yes,no,hard,no,Lite
+12,cronjob_sidecar_blocks_completion_hotel_reservation,Misconfiguration [our label],hotel-reservation,New,yes,no,medium,no,Lite
+13,duplicate_pvc_mounts_social_network,Cloud Management System Failure,social-network,New,yes,no,easy,yes,Lite; same fault other app
+14,rolling_update_misconfigured_social_network,Misconfiguration Failure,social-network,New,yes,no,medium,maybe,Lite
+15,storage_user_unregistered-1,Security Failure,hotel-reservation,AIOpsLab,no,no,medium,no,structural (create DB user)
+16,auth_miss_mongodb,Security Failure,social-network,AIOpsLab,no,no,hard,no,TLS
+17,missing_service_hotel_reservation,Cloud Management System Failure,hotel-reservation,New,no,no,easy,no,visible symptom
+18,scale_pod_zero_social_net,Cloud Management System Failure,social-network,AIOpsLab,no,no,easy,yes,typed control
+19,wrong_service_selector_hotel_reservation,Misconfiguration Failure,hotel-reservation,New,no,no,easy,no,visible symptom
+20,readiness_probe_misconfiguration_hotel_reservation,Misconfiguration Failure,hotel-reservation,New,no,no,medium,no,probe faults
+21,missing_configmap_hotel_reservation,Cloud Management System Failure,hotel-reservation,New,no,no,medium,no,visible symptom
+22,taint_no_toleration_social_network,Cloud Management System Failure,social-network,New,no,no,medium,no,scheduling
+23,sidecar_port_conflict_hotel_reservation,Misconfiguration Failure,hotel-reservation,New,no,no,medium,no,container level
+24,init_container_dependency_hang_social_network,Misconfiguration Failure,social-network,New,no,no,medium,no,init containers
+25,misconfig_app_hotel_res,System/Application Software Failure,hotel-reservation,AIOpsLab,no,no,easy,yes,rollback is the fix
+26,wrong_bin_usage,System/Application Software Failure,hotel-reservation,AIOpsLab,no,no,medium,maybe,AIOpsLab port
+27,update_incompatible_correlated,Correlated Failure,hotel-reservation,New,no,no,hard,maybe,only small-app correlated fault
+28,ephemeral_port_range_hotel_reservation,Misconfiguration Failure (OS level),hotel-reservation,New,no,no,hard,no,OS level sysctl
+29,file_descriptor_exhaustion,OS-level resource limit [our label],hotel-reservation,New,no,no,hard,no,OS level ulimit
+30,latent_sector_error,Hardware Component Failure,hotel-reservation,New,no,no,hard,no,hardware class on kind
