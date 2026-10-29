@@ -53,12 +53,16 @@ def patch_provider_endpoints(sregym_dir: Path) -> bool:
 def patch_container_runner(sregym_dir: Path) -> bool:
     path = sregym_dir / "sregym" / "service" / "container_runner.py"
     text = path.read_text(encoding="utf-8")
-    if "REACT_V1_ACTION_SPACE" in text:
+    # Every REACT_V1_* switch the driver reads must be on SREGym's env whitelist, or it silently never
+    # reaches the agent container. Idempotent per variable, so an already-patched clone gets only the new ones.
+    wanted = ["REACT_V1_ACTION_SPACE", "REACT_V1_LOG_OBS", "REACT_V1_LOG_OBS_MAX", "REACT_V1_BUDGET_AWARE"]
+    missing = [v for v in wanted if f'"{v}"' not in text]
+    if not missing:
         return False
     marker = '        # SREGym internal\n        "AGENT_MODEL_ID",\n'
     if marker not in text:
         raise RuntimeError(f"{path}: expected env-whitelist marker not found — check experiments/testbed-setup.md §6b by hand")
-    replacement = '        # SREGym internal\n        "AGENT_MODEL_ID",\n        "REACT_V1_ACTION_SPACE",\n'
+    replacement = marker + "".join(f'        "{v}",\n' for v in missing)
     path.write_text(text.replace(marker, replacement, 1), encoding="utf-8")
     return True
 
