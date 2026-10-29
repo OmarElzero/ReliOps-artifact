@@ -117,7 +117,12 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
             "- note: this transcript has no observations (run with `REACT_V1_LOG_OBS=on` to record what each "
             "command returned)"
         )
-    out.append("\nLegend: `[cluster]` = what happened to the system · `Step N` = what the agent did.\n")
+    n_claims = sum(1 for r in tr if r["type"] == "claim")
+    n_critic = sum(1 for r in tr if r["type"] == "critic")
+    if n_claims or n_critic:
+        out.append(f"- claim ledger: {n_claims} claim(s) · {n_critic} critic verdict(s)")
+    out.append("\nLegend: `[cluster]` = what happened to the system · `Step N` = what the agent did · "
+               "`[claim]` / `[critic]` = the reasoning ledger, when the agent records one.\n")
 
     # Build a merged, time-ordered event list. Agent steps are grouped: model_call + its action/submit.
     items: list[tuple[datetime, str, dict]] = []
@@ -132,6 +137,8 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
             step_no += 1
             items.append((t(pending), "step", {"n": step_no, "call": pending, "result": r}))
             pending = None
+        elif r["type"] in ("claim", "critic"):
+            items.append((t(r), "ledger", r))
         elif r["type"] == "wrap_up":
             items.append((t(r), "note", {"text": f"wrap-up forced ({r['reason']}) — told to submit now"}))
         elif r["type"] == "end":
@@ -145,6 +152,8 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
             out.append(f"`{stamp}` **[cluster]** {cluster_line(d)}\n")
         elif kind == "note":
             out.append(f"`{stamp}` _{d['text']}_\n")
+        elif kind == "ledger":
+            out.append(f"`{stamp}` {ledger_line(d)}\n")
         else:
             call, res = d["call"], d["result"]
             thought, raw = split_thought(call.get("content", ""))
@@ -167,6 +176,23 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
             out.append("")
 
     return "\n".join(out)
+
+
+def ledger_line(r: dict) -> str:
+    """Claim-ledger and critic records (proposal R1, docs/plan/02-agent.md). The agent does not emit them
+    yet; the schema is fixed here so the viewer is ready when it does:
+      {"type": "claim",  "claim": str, "evidence": [step numbers], "confidence": 0-1}
+      {"type": "critic", "verdict": "ok" | "not_ok", "flagged": [claim strings], "note": str}"""
+    if r["type"] == "claim":
+        ev = ", ".join(str(e) for e in (r.get("evidence") or [])) or "none cited"
+        conf = f" · confidence {r['confidence']}" if r.get("confidence") is not None else ""
+        warn = " ⚠ no evidence cited" if not r.get("evidence") else ""
+        return f"**[claim]** {r.get('claim', '')} — evidence: steps {ev}{conf}{warn}"
+    verdict = str(r.get("verdict", "?")).upper().replace("_", " ")
+    flagged = r.get("flagged") or []
+    extra = f" — flagged: {'; '.join(flagged)}" if flagged else ""
+    note = f" — {r['note']}" if r.get("note") else ""
+    return f"**[critic]** {verdict}{extra}{note}"
 
 
 def main() -> int:
