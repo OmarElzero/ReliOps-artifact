@@ -76,7 +76,7 @@ def main() -> None:
     results = {
         "agents.yaml (register reliops_v1)": patch_agents_yaml(sregym_dir),
         "provider_endpoints.py (egress allowlist)": patch_provider_endpoints(sregym_dir),
-        "container_runner.py (forward REACT_V1_ACTION_SPACE)": patch_container_runner(sregym_dir),
+        "container_runner.py (forward REACT_V1_* env switches)": patch_container_runner(sregym_dir),
     }
     for name, changed in results.items():
         print(f"{'patched' if changed else 'already applied, skipped'}: {name}")
