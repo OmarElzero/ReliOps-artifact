@@ -82,18 +82,13 @@ def cluster_line(c: dict) -> str:
     return json.dumps(c)[:200]
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("transcript")
-    ap.add_argument("--cluster")
-    ap.add_argument("--out")
-    args = ap.parse_args()
-
-    tr = load(args.transcript)
-    cl = load(args.cluster)
+def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
+    """Markdown story of one run. Importable (the ReliOps Lab calls this) and used by the CLI below.
+    Raises ValueError for an empty transcript."""
+    tr = load(transcript_path)
+    cl = load(cluster_path)
     if not tr:
-        print("empty transcript", file=sys.stderr)
-        return 1
+        raise ValueError("empty transcript")
 
     meta = next((r for r in tr if r["type"] == "meta"), {})
     calls = [r for r in tr if r["type"] == "model_call"]
@@ -171,7 +166,20 @@ def main() -> int:
                 out.append(f"_tokens: {usage.get('prompt_tokens', '?')} in / {usage.get('completion_tokens')} out_")
             out.append("")
 
-    text = "\n".join(out)
+    return "\n".join(out)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("transcript")
+    ap.add_argument("--cluster")
+    ap.add_argument("--out")
+    args = ap.parse_args()
+    try:
+        text = render_story(args.transcript, args.cluster)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        return 1
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8")
         print(f"wrote {args.out}", file=sys.stderr)
