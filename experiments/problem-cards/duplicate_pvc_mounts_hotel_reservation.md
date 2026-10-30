@@ -1,6 +1,6 @@
 # Problem card: `duplicate_pvc_mounts_hotel_reservation`
 
-Status: **draft**. Facts come from the team's 29 Oct run log (fault-injection output, judge verdict,
+Status: **draft**. Facts come from the 29 Oct run log (fault-injection output, judge verdict,
 agent's submitted diagnosis). Items marked **[unverified]** still need a `kubectl` check or a read of
 the SREGym problem source on a machine that has it.
 
