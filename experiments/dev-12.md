@@ -26,6 +26,17 @@ look like data.
   machines. If it does not fit, swap in a reserve (below).
 - **Seen types:** #1 (same fault type as frozen #15), #10 (same base class as frozen #30). Rows 3 and 6 are
   related to #3 and #23 but are different faults.
+- **Found while writing the draft cards (30 Oct, from the SREGym source, not from runs):**
+  - `persistent_volume_affinity_violation` raises "Need 2 worker nodes" in its injector, so it cannot run on a
+    single-node cluster. Check the local cluster shape before counting it.
+  - `silent_data_corruption` overwrites files on the node-level volume of `mongodb-geo`; recovery in SREGym is a full
+    redeploy. It may not be fixable by an agent at the infrastructure layer, so decide how to score it first.
+  - `service_port_conflict_social_network` needs the node-exporter on host port 9100 (the observability stack).
+  - `priority_preemption_cascade_hotel_reservation` sizes its pressure from the node's free memory, so it depends on
+    the cluster.
+  - Typed-only prediction (unverified): only `feature_flag_latent_bug_hotel_reservation` looks fixable with typed
+    actions alone (`patch_configmap_key` then `restart_deployment`); `wrong_dns_policy_hotel_reservation` might be via
+    `rollback_deployment`. The other ten look like they need the shell.
 - **Not validated yet:** none of the twelve has been run. Validation is the plumbing check in
   `docs/plan/11-sprint-to-13-nov.md` (step 2).
 
