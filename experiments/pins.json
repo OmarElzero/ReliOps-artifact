@@ -1,0 +1,21 @@
+{
+  "_about": "Pinned problem sets. A set is pinned by its hash (sorted problem ids). The Lab compares each CSV with its pin and warns when they differ. To change a pinned set, add a new entry with a new name and a written reason; never edit an entry in place.",
+  "frozen-30": {
+    "file": "first-30.csv",
+    "role": "frozen",
+    "problems_hash": "a842d9e1647d79e0",
+    "count": 30,
+    "pinned_on": "2026-10-30",
+    "pinned_by": "OmarElzero",
+    "note": "Frozen set for the current phase: each reported configuration is measured once, 30 problems x 3 repeats. Failures are not read to choose agent changes."
+  },
+  "dev-12": {
+    "file": "dev-12.csv",
+    "role": "dev",
+    "problems_hash": "a84fb6de44dfe82b",
+    "count": 12,
+    "pinned_on": "2026-10-30",
+    "pinned_by": "OmarElzero",
+    "note": "Development set: failures may be read to choose agent changes. Disjoint from frozen-30. See dev-12.md."
+  }
+}

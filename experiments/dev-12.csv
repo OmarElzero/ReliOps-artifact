@@ -1,0 +1,13 @@
+n,problem_id,type,app,origin,in_sregym_lite,in_pilot,expected_difficulty,typed_enough_prediction,why_included,seen_type_in_30
+1,storage_user_unregistered-2,Security Failure,hotel-reservation,AIOpsLab,no,no,unrated,,Security class on a small app,same fault type as #15 (other target)
+2,gc_capacity_degradation,Metastable Failure,hotel-reservation (Blueprint variant),New,no,no,unrated,,Metastable class; needs validation: uses the Blueprint variant of the app,no
+3,wrong_dns_policy_hotel_reservation,Network Failure,hotel-reservation,New,no,no,unrated,,Network class; pod DNS policy fault,related to #3 (DNS) but a different fault
+4,ingress_misroute,Network Failure,hotel-reservation,New,no,no,unrated,,Network class; routing fault at the ingress,no
+5,psa_restricted_blocks_recreation_hotel_reservation,Misconfiguration Failure,hotel-reservation,New,no,no,unrated,,Misconfiguration class; pod security admission blocks pod recreation,no
+6,service_port_conflict_social_network,Misconfiguration Failure,social-network,New,no,no,unrated,,Misconfiguration class on the second small app; hostPort conflict,related to #23 (port conflict) but a different fault
+7,priority_preemption_cascade_hotel_reservation,Cloud Management System Failure,hotel-reservation,New,no,no,unrated,,Cloud-management class; scheduler preemption,no
+8,liveness_probe_too_aggressive_hotel_reservation,Cloud Management System Failure,hotel-reservation,New,no,no,unrated,,Cloud-management class; probe-driven restart loop,no
+9,persistent_volume_affinity_violation,Cloud Management System Failure,social-network,New,no,no,unrated,,Cloud-management class on the second small app; storage scheduling,no
+10,silent_data_corruption,Hardware Component Failure,hotel-reservation,New,no,no,unrated,,Hardware class,same base class as #30 (latent_sector_error); different fault
+11,feature_flag_latent_bug_hotel_reservation,System/Application Software [our label],hotel-reservation,SREGym registry,no,no,unrated,,Software class; a config flag activates a dormant error path while pods stay Running,no
+12,expired_tls_hotel_reservation,Misconfiguration [our label],hotel-reservation,SREGym registry,no,no,unrated,,Certificate fault invisible at pod level; needs reading the ingress secret,no
