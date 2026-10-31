@@ -54,6 +54,52 @@ def split_thought(content: str) -> tuple[str, str]:
     return (content[: m.start()]).strip(), m.group(1).strip()
 
 
+MUTATING_VERBS = {"apply", "create", "delete", "patch", "replace", "scale", "set", "label", "annotate", "edit", "cordon",
+                  "uncordon", "drain", "taint", "expose", "autoscale", "run", "exec", "cp", "rollout-restart",
+                  "rollout-undo", "rollout-pause", "rollout-resume"}
+_FLAGS_WITH_VALUE = {"-n", "--namespace", "-c", "--container", "--context", "--kubeconfig", "-o", "--output", "-l", "--selector"}
+
+
+def kubectl_verb(cmd: str) -> str:
+    """The verb of a kubectl command line (`kubectl -n x get pods` -> `get`; `rollout restart` -> `rollout-restart`)."""
+    import shlex
+
+    try:
+        words = shlex.split(cmd or "")
+    except ValueError:
+        words = (cmd or "").split()
+    rest, skip = [], False
+    for w in words:
+        if skip:
+            skip = False
+        elif w == "kubectl":
+            continue
+        elif w in _FLAGS_WITH_VALUE:
+            skip = True
+        elif not w.startswith("-"):
+            rest.append(w)
+    if not rest:
+        return ""
+    return f"rollout-{rest[1]}" if rest[0] == "rollout" and len(rest) > 1 else rest[0]
+
+
+def is_real_write(action: str, args: dict) -> bool:
+    """The driver logs every `exec_kubectl_guarded` call as a write; only the mutating kubectl verbs change the cluster."""
+    if action == "exec_kubectl_guarded":
+        return kubectl_verb((args or {}).get("cmd", "")) in MUTATING_VERBS
+    return True
+
+
+def tokens(usage: dict | None, kind: str) -> int:
+    """Token count from a usage block in either format: input/output (SREGym v2, what the agent writes) or prompt/completion."""
+    u = usage or {}
+    names = ("input_tokens", "prompt_tokens") if kind == "in" else ("output_tokens", "completion_tokens")
+    for n in names:
+        if isinstance(u.get(n), int):
+            return u[n]
+    return 0
+
+
 def clip(text: str, n: int = OBS_LINES) -> str:
     lines = text.splitlines()
     if len(lines) <= n:
@@ -92,10 +138,10 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
 
     meta = next((r for r in tr if r["type"] == "meta"), {})
     calls = [r for r in tr if r["type"] == "model_call"]
-    writes = [r for r in tr if r["type"] == "write_action"]
+    writes = [r for r in tr if r["type"] == "write_action" and is_real_write(r.get("action", ""), r.get("args", {}))]
     submits = [r for r in tr if r["type"] == "submit"]
-    prompt_tok = sum((r.get("usage") or {}).get("prompt_tokens", 0) or 0 for r in calls)
-    compl_tok = sum((r.get("usage") or {}).get("completion_tokens", 0) or 0 for r in calls)
+    prompt_tok = sum(tokens(r.get("usage"), "in") for r in calls)
+    compl_tok = sum(tokens(r.get("usage"), "out") for r in calls)
     t0 = min([t(r) for r in tr] + [t(r) for r in cl])
 
     def rel(r: dict) -> str:
@@ -110,6 +156,8 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
     out.append(
         f"- {len(calls)} model calls · {len(writes)} write action(s) · tokens: {prompt_tok} in / {compl_tok} out"
     )
+    if meta.get("features") or meta.get("variant"):
+        out.append(f"- agent variant: `{meta.get('variant') or '-'}` · switches on: {', '.join(meta.get('features') or []) or 'none'}")
     for s in submits:
         out.append(f"- submitted **{s['stage']}** (accepted={s['accepted']})")
     if not any("observation" in r for r in tr if r["type"] == "action"):
@@ -139,6 +187,9 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
             pending = None
         elif r["type"] in ("claim", "critic"):
             items.append((t(r), "ledger", r))
+        elif r["type"] == "feature":
+            extra = ", ".join(f"{k}={v}" for k, v in r.items() if k not in ("ts", "type", "name", "stage", "event"))
+            items.append((t(r), "note", {"text": f"[feature {r.get('name')}] {r.get('event')} (stage {r.get('stage')}{', ' + extra if extra else ''})"}))
         elif r["type"] == "wrap_up":
             items.append((t(r), "note", {"text": f"wrap-up forced ({r['reason']}) — told to submit now"}))
         elif r["type"] == "end":
@@ -171,8 +222,8 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
                 if "observation" in res:
                     out.append("**Sees:**\n```\n" + clip(res["observation"]) + "\n```")
             usage = call.get("usage") or {}
-            if usage.get("completion_tokens"):
-                out.append(f"_tokens: {usage.get('prompt_tokens', '?')} in / {usage.get('completion_tokens')} out_")
+            if tokens(usage, "out"):
+                out.append(f"_tokens: {tokens(usage, 'in')} in / {tokens(usage, 'out')} out_")
             out.append("")
 
     return "\n".join(out)

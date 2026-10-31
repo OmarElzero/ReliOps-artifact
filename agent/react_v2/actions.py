@@ -1,0 +1,265 @@
+"""Typed action catalogue for react-v1 (action_space=typed).
+
+Every action here maps to exactly one kubectl invocation, built from argument lists (never shell
+string interpolation), so the model can only ever reach this fixed menu — it cannot express an
+arbitrary kubectl command. This is the "typed" arm of the test-matrix.md action_space axis; the
+"typed+shell" arm (a later build) adds one more action that accepts a free kubectl command string
+behind the same guard SREGym's own exec_kubectl_cmd_safely uses.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import subprocess
+import uuid
+from dataclasses import dataclass
+
+
+@dataclass
+class ActionResult:
+    stdout: str
+    stderr: str
+    exit_code: int
+    timed_out: bool = False
+
+
+def _run(args: list[str], timeout: int = 60) -> ActionResult:
+    try:
+        proc = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        return ActionResult(proc.stdout, proc.stderr, proc.returncode)
+    except subprocess.TimeoutExpired as e:
+        return ActionResult(e.stdout or "", (e.stderr or "") + f"\n[timed out after {timeout}s]", 124, timed_out=True)
+    except FileNotFoundError as e:
+        return ActionResult("", str(e), 127)
+
+
+# ---- read actions ----
+
+
+def get_pod_status(namespace: str) -> ActionResult:
+    return _run(["kubectl", "get", "pods", "-n", namespace, "-o", "wide"])
+
+
+def get_logs(namespace: str, pod: str, container: str | None = None, tail: int = 200, previous: bool = False) -> ActionResult:
+    args = ["kubectl", "logs", pod, "-n", namespace, f"--tail={tail}"]
+    if container:
+        args += ["-c", container]
+    if previous:
+        args += ["--previous"]
+    return _run(args)
+
+
+def describe(namespace: str, kind: str, name: str) -> ActionResult:
+    return _run(["kubectl", "describe", kind, name, "-n", namespace])
+
+
+def get_events(namespace: str) -> ActionResult:
+    return _run(["kubectl", "get", "events", "-n", namespace, "--sort-by=.lastTimestamp"])
+
+
+def get_resource(namespace: str, kind: str, name: str, output: str = "yaml") -> ActionResult:
+    return _run(["kubectl", "get", kind, name, "-n", namespace, "-o", output])
+
+
+# ---- write actions (bounded) ----
+
+
+def restart_deployment(namespace: str, name: str) -> ActionResult:
+    return _run(["kubectl", "rollout", "restart", f"deployment/{name}", "-n", namespace])
+
+
+def scale_deployment(namespace: str, name: str, replicas: int) -> ActionResult:
+    return _run(["kubectl", "scale", f"deployment/{name}", "-n", namespace, f"--replicas={int(replicas)}"])
+
+
+def rollback_deployment(namespace: str, name: str) -> ActionResult:
+    return _run(["kubectl", "rollout", "undo", f"deployment/{name}", "-n", namespace])
+
+
+def set_env(namespace: str, deployment: str, key: str, value: str, container: str | None = None) -> ActionResult:
+    args = ["kubectl", "set", "env", f"deployment/{deployment}", "-n", namespace, f"{key}={value}"]
+    if container:
+        args += ["-c", container]
+    return _run(args)
+
+
+def patch_configmap_key(namespace: str, configmap: str, key: str, value: str) -> ActionResult:
+    patch = json.dumps({"data": {key: value}})
+    return _run(["kubectl", "patch", "configmap", configmap, "-n", namespace, "--type", "merge", "-p", patch])
+
+
+def delete_pod(namespace: str, pod: str) -> ActionResult:
+    """Force recreation of one pod (its controller will replace it). Scoped to a single named pod."""
+    return _run(["kubectl", "delete", "pod", pod, "-n", namespace])
+
+
+# ---- survey (switch SURVEY) ----
+
+_SURVEY_SKIP = {"events", "events.events.k8s.io", "endpoints", "endpointslices.discovery.k8s.io", "leases.coordination.k8s.io"}
+
+
+def survey(namespace: str) -> ActionResult:
+    """One read-only overview: the name of every object, of every namespaced kind the cluster reports, in the
+    namespace (so no kind is chosen by us), plus the nodes. Events, endpoints and leases are left out as noise."""
+    kinds_out = _run(["kubectl", "api-resources", "--verbs=list", "--namespaced=true", "-o", "name"])
+    kinds = [k for k in kinds_out.stdout.split() if k not in _SURVEY_SKIP]
+    parts = []
+    if kinds:
+        objs = _run(["kubectl", "get", ",".join(kinds), "-n", namespace, "-o", "name", "--ignore-not-found"], timeout=90)
+        parts.append(f"## objects in namespace {namespace}\n{objs.stdout}")
+    else:
+        parts.append(f"## could not list resource kinds\n{kinds_out.stderr}")
+    nodes = _run(["kubectl", "get", "nodes", "-o", "wide"])
+    parts.append(f"## nodes\n{nodes.stdout}{(chr(10) + nodes.stderr) if nodes.stderr else ''}")
+    return ActionResult("\n".join(parts), "", 0)
+
+
+# ---- catalogue v2 (switch CATALOGUE_V2): generic typed actions for what the v1 menu cannot express ----
+
+
+def patch_resource(namespace: str, kind: str, name: str, patch: str, patch_type: str = "strategic") -> ActionResult:
+    """kubectl patch with a JSON patch body. patch_type: strategic | merge | json."""
+    if patch_type not in ("strategic", "merge", "json"):
+        return ActionResult("", f"patch_type must be strategic, merge or json, got {patch_type!r}", 2)
+    try:
+        json.loads(patch)
+    except json.JSONDecodeError as e:
+        return ActionResult("", f"patch is not valid JSON: {e}", 2)
+    return _run(["kubectl", "patch", kind, name, "-n", namespace, "--type", patch_type, "-p", patch])
+
+
+def delete_resource(namespace: str, kind: str, name: str) -> ActionResult:
+    """Delete one named object (any kind except namespace). The controller recreates it if there is one."""
+    if kind.lower() in ("namespace", "namespaces", "ns", "node", "nodes"):
+        return ActionResult("", f"deleting a {kind} is not allowed", 2)
+    return _run(["kubectl", "delete", kind, name, "-n", namespace])
+
+
+def exec_in_pod(namespace: str, pod: str, command: str, container: str | None = None) -> ActionResult:
+    """Run one command inside a pod (no shell: the command string is split into words)."""
+    import shlex
+
+    try:
+        words = shlex.split(command)
+    except ValueError as e:
+        return ActionResult("", f"cannot parse command: {e}", 2)
+    args = ["kubectl", "exec", pod, "-n", namespace]
+    if container:
+        args += ["-c", container]
+    return _run(args + ["--"] + words, timeout=90)
+
+
+# ---- shell escape hatch (action_space=typed+shell only) ----
+
+_MCP_SESSION_ID = str(uuid.uuid4())
+
+
+async def _call_kubectl_mcp_tool(tool_name: str, arguments: dict | None = None) -> str:
+    """Call SREGym's own kubectl MCP guard (dry-run + unsafe-command filter + rollback stack) —
+    the same mechanism STRATUS uses (clients/stratus/stratus_utils/str_to_tool.py), so the
+    typed-vs-shell comparison isn't confounded by a different, home-grown guard."""
+    from fastmcp import Client
+    from fastmcp.client import SSETransport
+
+    api_hostname = os.getenv("API_HOSTNAME", "localhost")
+    mcp_server_port = os.getenv("MCP_SERVER_PORT", "9954")
+    mcp_base_url = os.getenv("MCP_SERVER_URL", f"http://{api_hostname}:{mcp_server_port}")
+    transport = SSETransport(
+        url=f"{mcp_base_url}/kubectl/sse",
+        headers={"sregym_ssid": _MCP_SESSION_ID},
+        sse_read_timeout=120,
+    )
+    client = Client(transport)
+    async with client:
+        result = await client.call_tool(tool_name, arguments=arguments or {})
+        return "\n".join(part.text for part in result if hasattr(part, "text"))
+
+
+def exec_kubectl_guarded(cmd: str, namespace: str | None = None) -> ActionResult:
+    """Free-form kubectl command, routed through SREGym's own guarded MCP tool (dry-run first,
+    unsafe-command filter, rollback stack). `namespace` is accepted but unused — the command
+    string must name its own namespace with -n, same as the real exec_kubectl_cmd_safely tool."""
+    del namespace
+    try:
+        text = asyncio.run(_call_kubectl_mcp_tool("exec_kubectl_cmd_safely", {"cmd": cmd}))
+        return ActionResult(text, "", 0)
+    except Exception as e:
+        return ActionResult("", f"MCP call failed: {e}", 1)
+
+
+def rollback_last_guarded_command() -> ActionResult:
+    """Roll back the last command run via exec_kubectl_guarded, via SREGym's own rollback_command tool."""
+    try:
+        text = asyncio.run(_call_kubectl_mcp_tool("rollback_command"))
+        return ActionResult(text, "", 0)
+    except Exception as e:
+        return ActionResult("", f"MCP call failed: {e}", 1)
+
+
+# name -> (callable, required arg names) for the driver's dispatcher + prompt text
+TYPED_ACTIONS = {
+    "get_pod_status": (get_pod_status, ["namespace"]),
+    "get_logs": (get_logs, ["namespace", "pod"]),
+    "describe": (describe, ["namespace", "kind", "name"]),
+    "get_events": (get_events, ["namespace"]),
+    "get_resource": (get_resource, ["namespace", "kind", "name"]),
+    "restart_deployment": (restart_deployment, ["namespace", "name"]),
+    "scale_deployment": (scale_deployment, ["namespace", "name", "replicas"]),
+    "rollback_deployment": (rollback_deployment, ["namespace", "name"]),
+    "set_env": (set_env, ["namespace", "deployment", "key", "value"]),
+    "patch_configmap_key": (patch_configmap_key, ["namespace", "configmap", "key", "value"]),
+    "delete_pod": (delete_pod, ["namespace", "pod"]),
+}
+
+SHELL_ACTIONS = {
+    "exec_kubectl_guarded": (exec_kubectl_guarded, ["cmd"]),
+    "rollback_last_guarded_command": (rollback_last_guarded_command, []),
+}
+
+SURVEY_ACTIONS = {
+    "survey": (survey, ["namespace"]),
+}
+
+CATALOGUE_V2_ACTIONS = {
+    "patch_resource": (patch_resource, ["namespace", "kind", "name", "patch"]),
+    "delete_resource": (delete_resource, ["namespace", "kind", "name"]),
+    "exec_in_pod": (exec_in_pod, ["namespace", "pod", "command"]),
+}
+
+# Optional arguments each action accepts (v1 dropped these: the dispatcher only passed the required ones).
+OPTIONAL_ARGS = {
+    "get_logs": ["container", "tail", "previous"],
+    "get_resource": ["output"],
+    "set_env": ["container"],
+    "patch_resource": ["patch_type"],
+    "exec_in_pod": ["container"],
+}
+
+WRITE_ACTIONS = {
+    "patch_resource",
+    "delete_resource",
+    "exec_in_pod",
+    "restart_deployment",
+    "scale_deployment",
+    "rollback_deployment",
+    "set_env",
+    "patch_configmap_key",
+    "delete_pod",
+    "exec_kubectl_guarded",
+}
+
+
+def actions_for(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False) -> dict:
+    """action_space: 'typed' or 'typed+shell'. The two keyword switches add actions; both off = the v1 menu."""
+    actions = {**TYPED_ACTIONS, **SHELL_ACTIONS} if action_space == "typed+shell" else dict(TYPED_ACTIONS)
+    if survey_tool:
+        actions.update(SURVEY_ACTIONS)
+    if catalogue_v2:
+        actions.update(CATALOGUE_V2_ACTIONS)
+    return actions
+
+
+# Backward-compatible default (typed-only) for anything importing ACTIONS directly.
+ACTIONS = TYPED_ACTIONS
