@@ -49,6 +49,7 @@ from .prompts import (  # noqa: E402
     FORMAT_ERROR_TEXT,
     MISSING_ARGS_TEXT,
     SELFCHECK_TEXT,
+    SELFCHECK_FORMAT_TEXT,
     SOAK_TEXT,
     UNKNOWN_ACTION_TEXT,
     instance_text,
@@ -73,7 +74,19 @@ REASONING_EFFORT = os.environ.get("AGENT_REASONING_EFFORT")
 HARD_CAP = int(os.environ.get("REACT_V1_HARD_CAP", "40"))
 WRAP_UP_CALLS = int(os.environ.get("REACT_V1_WRAP_UP_CALLS", "3"))
 RETRY_WAIT_S = float(os.environ.get("REACT_V1_RETRY_WAIT_S", "30"))
+# Consecutive unusable model replies (empty, errors) before the stage gives up. v1 gave up after 2; round 1 lost 46 of 239
+# attempts that way, most by the fifth call. Waits grow: RETRY_WAIT_S x 1, x 2, x 3.
+MAX_MODEL_FAILURES = int(os.environ.get("REACT_V1_MAX_MODEL_FAILURES", "4"))
 MAX_FORMAT_ERRORS = 3
+
+
+_CHECKLIST_RE = re.compile(r"claims? and support|supporting observation|alternative explanation", re.IGNORECASE)
+
+
+def looks_like_checklist(text) -> bool:
+    """True when a re-submitted diagnosis is the self-check's own checklist (seen in 9 round-1 runs) instead of a diagnosis.
+    Matches only the wording of SELFCHECK_TEXT, nothing about any fault."""
+    return bool(_CHECKLIST_RE.search(str(text or "")))
 
 # F7 (docs/plan/02-agent.md §3): off by default so baseline-v1 behaviour (frozen 24 Oct 2026) is
 # unchanged unless a run explicitly opts in — this flag is itself the thing Phase C's OFAT
@@ -253,6 +266,7 @@ def run_stage(
     wrap_up_sent = False
     wrap_up_calls = 0
     empty_rejections = 0
+    selfcheck_format_asked = False
     selfcheck_first: str | None = None  # the diagnosis as first submitted, when the self-check asked about it
     soak_done = False
 
@@ -294,9 +308,9 @@ def run_stage(
         if reply.error:
             consecutive_failures += 1
             logger.warning(f"model call unusable: {reply.error}")
-            if consecutive_failures >= 2:
+            if consecutive_failures >= MAX_MODEL_FAILURES:
                 return outcome("model_failure")
-            time.sleep(RETRY_WAIT_S)
+            time.sleep(RETRY_WAIT_S * consecutive_failures)
             continue
         consecutive_failures = 0
         session.add_assistant(reply)
@@ -326,6 +340,11 @@ def run_stage(
                     selfcheck_first = str(solution)
                     feature_event("SELFCHECK", "asked")
                     session.add_user(SELFCHECK_TEXT)
+                    continue
+                if selfcheck_first is not False and looks_like_checklist(solution) and not selfcheck_format_asked:
+                    selfcheck_format_asked = True
+                    feature_event("SELFCHECK", "checklist_submitted")
+                    session.add_user(SELFCHECK_FORMAT_TEXT)
                     continue
                 if selfcheck_first is not False:
                     feature_event("SELFCHECK", "answered", changed=str(solution).strip() != selfcheck_first.strip())

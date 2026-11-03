@@ -126,7 +126,11 @@ SELFCHECK_TEXT = """Before the diagnosis is accepted, check it against what you 
 1. List each claim in your diagnosis and the step number of the observation that supports it.
 2. Name one alternative explanation you considered and the observation that rules it out.
 3. If any claim has no supporting observation, run an action to get one now.
-Then submit your diagnosis again (unchanged if it holds, corrected if it does not)."""
+Then submit again. The submission must be the diagnosis itself (what is wrong, where, and the key evidence), not this
+checklist: unchanged if it holds, corrected if it does not."""
+
+SELFCHECK_FORMAT_TEXT = """That submission is the checklist, not the diagnosis. Submit only the diagnosis: what is wrong, where, and the
+key evidence, in a few sentences."""
 
 SOAK_TEXT = """Soak check: {seconds}s after your last change, this is the current state.
 

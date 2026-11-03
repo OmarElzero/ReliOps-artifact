@@ -119,14 +119,23 @@ def survey(namespace: str) -> ActionResult:
 # ---- catalogue v2 (switch CATALOGUE_V2): generic typed actions for what the v1 menu cannot express ----
 
 
-def patch_resource(namespace: str, kind: str, name: str, patch: str, patch_type: str = "strategic") -> ActionResult:
-    """kubectl patch with a JSON patch body. patch_type: strategic | merge | json."""
+def patch_resource(namespace: str, kind: str, name: str, patch, patch_type: str | None = None) -> ActionResult:
+    """kubectl patch. patch: a JSON string, or the object/list itself. patch_type: strategic | merge | json; when it is
+    not given, a list (a JSON patch) uses json and an object uses strategic."""
+    if isinstance(patch, (list, dict)):
+        body = patch
+        patch = json.dumps(patch)
+    else:
+        try:
+            body = json.loads(patch)
+        except (json.JSONDecodeError, TypeError) as e:
+            return ActionResult("", f"patch is not valid JSON: {e}", 2)
+    if patch_type is None:
+        patch_type = "json" if isinstance(body, list) else "strategic"
     if patch_type not in ("strategic", "merge", "json"):
         return ActionResult("", f"patch_type must be strategic, merge or json, got {patch_type!r}", 2)
-    try:
-        json.loads(patch)
-    except json.JSONDecodeError as e:
-        return ActionResult("", f"patch is not valid JSON: {e}", 2)
+    if isinstance(body, list) != (patch_type == "json"):
+        return ActionResult("", "a JSON patch (a list of operations) needs patch_type json; strategic and merge take an object", 2)
     return _run(["kubectl", "patch", kind, name, "-n", namespace, "--type", patch_type, "-p", patch])
 
 
