@@ -25,7 +25,7 @@ from datetime import datetime
 from pathlib import Path
 
 JSON_BLOCK_RE = re.compile(r"```json\s*\n(.*?)\n```", re.DOTALL)
-OBS_LINES = 25  # max observation lines shown per step
+OBS_LINES = 80  # max observation lines shown per step (the agent sees up to 8,000 characters of each)
 
 
 def load(path: str | None) -> list[dict]:
@@ -101,10 +101,16 @@ def tokens(usage: dict | None, kind: str) -> int:
 
 
 def clip(text: str, n: int = OBS_LINES) -> str:
+    """The observation as the agent saw it, up to n lines. The agent gets the whole command output (up to 8,000 characters,
+    ending in </output>); a recorded copy without that ending was cut when it was saved (older runs saved 3,000
+    characters), so the agent saw more than the story can show, and the story says so."""
     lines = text.splitlines()
+    cut_note = ""
+    if text.lstrip().startswith("<exit_code>") and "</output>" not in text:
+        cut_note = f"\n... [the saved copy ends here ({len(text)} characters); the agent saw more of this output]"
     if len(lines) <= n:
-        return text
-    return "\n".join(lines[:n]) + f"\n... [{len(lines) - n} more lines]"
+        return text + cut_note
+    return "\n".join(lines[:n]) + f"\n... [{len(lines) - n} more lines the agent also saw]" + cut_note
 
 
 def cluster_line(c: dict) -> str:
