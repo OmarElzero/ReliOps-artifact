@@ -55,16 +55,25 @@ def patch_provider_endpoints(sregym_dir: Path) -> bool:
     raise RuntimeError(f"{path}: expected the agent allowlist line not found — check experiments/testbed-setup.md §6b by hand")
 
 
+def forwarded_env_names() -> list[str]:
+    """Every REACT_V1_* name the agents read. The switch names come from agent/react_v2/features.py itself, so a new switch
+    can never be left off the whitelist (round 2's switches were, before this)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_v2_features", REPO_ROOT / "agent" / "react_v2" / "features.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    fixed = ["REACT_V1_ACTION_SPACE", "REACT_V1_LOG_OBS", "REACT_V1_LOG_OBS_MAX", "REACT_V1_BUDGET_AWARE", "REACT_V1_SOAK_S",
+             "REACT_V1_VARIANT", "REACT_V1_MAX_MODEL_FAILURES", "REACT_V1_RETRY_WAIT_S", "REACT_V1_VERIFY_WAIT_S",
+             "REACT_V1_MAX_UNDO_ROUNDS"]
+    return fixed + [f"REACT_V1_{n}" for n in mod.SWITCHES if f"REACT_V1_{n}" not in fixed]
+
+
 def patch_container_runner(sregym_dir: Path) -> bool:
     path = sregym_dir / "sregym" / "service" / "container_runner.py"
     text = path.read_text(encoding="utf-8")
     # Every REACT_V1_* switch the driver reads must be on SREGym's env whitelist, or it silently never
     # reaches the agent container. Idempotent per variable, so an already-patched clone gets only the new ones.
-    wanted = ["REACT_V1_ACTION_SPACE", "REACT_V1_LOG_OBS", "REACT_V1_LOG_OBS_MAX", "REACT_V1_BUDGET_AWARE",
-              # react-v2 switches (agent/react_v2/features.py), the variant name and the soak wait
-              "REACT_V1_TOKEN_LOG", "REACT_V1_EMPTY_SUBMIT_GUARD", "REACT_V1_OPTIONAL_ARGS", "REACT_V1_FAULT_EXISTS",
-              "REACT_V1_SURVEY", "REACT_V1_LEDGER", "REACT_V1_SELFCHECK", "REACT_V1_SOAK", "REACT_V1_CATALOGUE_V2",
-              "REACT_V1_K8S_KNOWLEDGE", "REACT_V1_SOAK_S", "REACT_V1_VARIANT"]
+    wanted = forwarded_env_names()
     missing = [v for v in wanted if f'"{v}"' not in text]
     if not missing:
         return False

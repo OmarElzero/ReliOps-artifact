@@ -34,9 +34,10 @@ exec_kubectl_guarded only for what no typed action covers."""
 
 
 def _action_list_text(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False,
-                      optional_args: bool = False) -> str:
+                      optional_args: bool = False, health_sweep: bool = False, change_diff: bool = False) -> str:
     lines = []
-    for name, (_, arg_names) in actions_for(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2).items():
+    for name, (_, arg_names) in actions_for(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2,
+                                            health_sweep=health_sweep, change_diff=change_diff).items():
         kind = "write" if name in WRITE_ACTIONS else "read"
         shown = list(arg_names)
         if optional_args:
@@ -46,10 +47,11 @@ def _action_list_text(action_space: str, *, survey_tool: bool = False, catalogue
 
 
 def system_text(action_space: str = "typed", *, survey_tool: bool = False, catalogue_v2: bool = False,
-                optional_args: bool = False, knowledge: str = "") -> str:
+                optional_args: bool = False, knowledge: str = "", health_sweep: bool = False, change_diff: bool = False) -> str:
     shell_note = SHELL_NOTE if action_space == "typed+shell" else " You cannot run arbitrary shell commands — only these typed actions exist."
     text = SYSTEM_TEMPLATE.format(
-        action_list=_action_list_text(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2, optional_args=optional_args),
+        action_list=_action_list_text(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2, optional_args=optional_args,
+                                      health_sweep=health_sweep, change_diff=change_diff),
         shell_note=shell_note)
     if optional_args:
         text += "\n\nArguments in [brackets] are optional."
@@ -86,11 +88,30 @@ LEDGER_TEXT = """
    observation rules it out, and do not call one supported without citing the step that supports it."""
 
 
-def instance_text(app_info: dict, *, fault_exists: bool = False, survey_first: bool = False, ledger: bool = False) -> str:
+HEALTH_SWEEP_TEXT = """
+9. "health_sweep" runs the standard per-kind health checks of the open-source k8sgpt tool over the cluster (pods,
+   deployments, replica sets, services, ingresses, volume claims, stateful sets, daemon sets, jobs, cron jobs, nodes,
+   webhooks, config maps) and lists every problem they report. An empty result means those checks found nothing, not
+   that nothing is wrong."""
+
+CHANGE_DIFF_TEXT = """
+10. "recent_changes" lists every object changed after it was created (newest first), the objects created around the time
+    the application was deployed, and what differs between each Deployment's previous and current pod template. A
+    change is not a cause by itself: check whether it explains what you observe."""
+
+VERIFY_UNDO_TEXT = """
+11. In the mitigation stage, the objects you change are recorded first. When you submit, the standard health checks run
+    again after a short wait; if your change made things worse or changed nothing they can see, it is undone and you are
+    told why, so you can try a different fix."""
+
+
+def instance_text(app_info: dict, *, fault_exists: bool = False, survey_first: bool = False, ledger: bool = False,
+                  health_sweep: bool = False, change_diff: bool = False, verify_undo: bool = False) -> str:
     app_name = app_info.get("app_name", "unknown")
     namespace = app_info.get("namespace", "default")
     descriptions = app_info.get("descriptions", "")
-    extra = (FAULT_EXISTS_TEXT if fault_exists else "") + (SURVEY_TEXT if survey_first else "") + (LEDGER_TEXT if ledger else "")
+    extra = (FAULT_EXISTS_TEXT if fault_exists else "") + (SURVEY_TEXT if survey_first else "") + (LEDGER_TEXT if ledger else "") \
+        + (HEALTH_SWEEP_TEXT if health_sweep else "") + (CHANGE_DIFF_TEXT if change_diff else "") + (VERIFY_UNDO_TEXT if verify_undo else "")
     return f"""You are diagnosing and fixing an issue in the '{app_name}' application, namespace '{namespace}'.
 
 {descriptions}
@@ -140,3 +161,16 @@ SOAK_TEXT = """Soak check: {seconds}s after your last change, this is the curren
 
 If anything is still unhealthy, or a pod restarted since your change, keep working on it. If it is healthy
 and stable, submit again."""
+
+VERIFY_UNDO_FAIL_TEXT = """Check {seconds}s after your changes: {why}. The standard health checks now report:
+{findings}
+
+Your changes were undone, so the cluster is back where it was before them:
+{undone}
+
+Work out why the fix did not work and try a different one, then submit again."""
+
+VERIFY_PARTIAL_TEXT = """Check {seconds}s after your changes: some problems seen before them are gone, but these remain:
+{findings}
+
+If they belong to the incident, fix them too; then submit again."""

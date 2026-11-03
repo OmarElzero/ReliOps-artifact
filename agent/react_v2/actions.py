@@ -260,13 +260,20 @@ WRITE_ACTIONS = {
 }
 
 
-def actions_for(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False) -> dict:
-    """action_space: 'typed' or 'typed+shell'. The two keyword switches add actions; both off = the v1 menu."""
+def actions_for(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False,
+                health_sweep: bool = False, change_diff: bool = False) -> dict:
+    """action_space: 'typed' or 'typed+shell'. The keyword switches add actions; all off = the v1 menu."""
     actions = {**TYPED_ACTIONS, **SHELL_ACTIONS} if action_space == "typed+shell" else dict(TYPED_ACTIONS)
     if survey_tool:
         actions.update(SURVEY_ACTIONS)
     if catalogue_v2:
         actions.update(CATALOGUE_V2_ACTIONS)
+    if health_sweep or change_diff:
+        from . import inspect_tools  # imported here: inspect_tools imports this module
+        if health_sweep:
+            actions["health_sweep"] = (inspect_tools.health_sweep, ["namespace"])
+        if change_diff:
+            actions["recent_changes"] = (inspect_tools.recent_changes, ["namespace"])
     return actions
 
 

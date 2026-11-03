@@ -22,6 +22,14 @@ SWITCHES = {
     "SOAK": "F6 - after a fix, wait and re-read the cluster before the mitigation submit is accepted",
     "CATALOGUE_V2": "A4b - typed actions for field patches, deleting an object and running a command in a pod",
     "K8S_KNOWLEDGE": "F13 - append reviewed general Kubernetes notes (knowledge/k8s_notes.md) to the prompt",
+    # Round 2 (docs/plan/14-plan-review-after-research.md): generic; content comes from the cluster or from k8sgpt, not from us.
+    "HEALTH_SWEEP": "R2 - read action running the rules of k8sgpt's 14 core analyzers over the cluster (inspect_tools.py)",
+    "CHANGE_DIFF": "R2 - read action listing every object changed after creation, objects created in the window, pod-template diffs",
+    "OUTPUT_TRIM": "R2 - merge repeated lines in long observations and keep head and tail",
+    "VERIFY_UNDO": "R2 - record objects before each mitigation write; on submit, wait, re-run the health checks, undo if worse or no effect",
+    # Calibration only (plan 14, step M1): reads nothing, changes nothing, submits at once. A problem this agent passes has a
+    # check that passes without a fix.
+    "NULL_AGENT": "M1 - do-nothing agent: no model call, submits a fixed non-diagnosis and an empty fix",
 }
 
 

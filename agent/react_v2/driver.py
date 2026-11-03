@@ -41,6 +41,7 @@ from clients.harness.token_usage import aggregate_usage  # noqa: E402
 from clients.mini_sre.backends import ApiBackend  # noqa: E402
 
 from . import features  # noqa: E402
+from . import inspect_tools  # noqa: E402
 from .actions import OPTIONAL_ARGS, WRITE_ACTIONS, actions_for  # noqa: E402
 from .pricing import cost_usd, price_note  # noqa: E402
 from .prompts import (  # noqa: E402
@@ -51,6 +52,8 @@ from .prompts import (  # noqa: E402
     SELFCHECK_TEXT,
     SELFCHECK_FORMAT_TEXT,
     SOAK_TEXT,
+    VERIFY_PARTIAL_TEXT,
+    VERIFY_UNDO_FAIL_TEXT,
     UNKNOWN_ACTION_TEXT,
     instance_text,
     system_text,
@@ -60,6 +63,9 @@ logger = logging.getLogger("all.react_v1.driver")
 
 FEATURES = features.enabled()
 SOAK_S = int(os.environ.get("REACT_V1_SOAK_S", "60"))
+VERIFY_WAIT_S = int(os.environ.get("REACT_V1_VERIFY_WAIT_S", "60"))
+MAX_UNDO_ROUNDS = int(os.environ.get("REACT_V1_MAX_UNDO_ROUNDS", "2"))
+NULL_DIAGNOSIS = "No diagnosis: this is the do-nothing calibration agent; it observed nothing and changed nothing."
 EMPTY_DIAGNOSIS_RETRIES = 2
 _writes_total = 0  # valid write actions so far in this run (both stages); the soak check only applies after a write
 
@@ -242,6 +248,8 @@ def dispatch_action(action_name: str, args: dict, namespace: str, actions: dict)
     except TypeError as e:
         return f"Bad arguments for {action_name!r}: {e}", False
     body = result.stdout + (("\n" + result.stderr) if result.stderr else "")
+    if FEATURES["OUTPUT_TRIM"]:
+        body = inspect_tools.trim_output(body)
     return ACTION_OBSERVATION_TEMPLATE.format(code=result.exit_code, body=body[:8000]), True
 
 
@@ -269,12 +277,30 @@ def run_stage(
     selfcheck_format_asked = False
     selfcheck_first: str | None = None  # the diagnosis as first submitted, when the self-check asked about it
     soak_done = False
+    undo_snaps: dict = {}          # VERIFY_UNDO: (kind, name, namespace) -> snapshot taken before the first change to it
+    undo_baseline: set | None = None
+    undo_rounds = 0
+    partial_told = False
+    writes_since_verify = 0
 
     def feature_event(name: str, event: str, **extra) -> None:
         transcript.write({"type": "feature", "name": name, "stage": stage, "event": event, **extra})
 
     def outcome(reason: str) -> StageOutcome:
         return StageOutcome(stage, reason, used, model_calls, usage_records, round(time.monotonic() - started, 3))
+
+    if FEATURES["NULL_AGENT"]:
+        solution = NULL_DIAGNOSIS if stage == "diagnosis" else ""
+        try:
+            resp = requests.post(f"{CONDUCTOR_URL}/submit", json={"stage": stage, "solution": solution}, timeout=120)
+            accepted = resp.status_code == 200 and resp.json().get("stage") == stage
+        except Exception as e:
+            accepted = False
+            logger.warning(f"submit failed: {e}")
+        transcript.write({"type": "submit", "stage": stage, "solution": solution, "accepted": accepted})
+        feature_event("NULL_AGENT", "submitted")
+        session.add_user(f"Submission accepted for stage '{stage}'.")
+        return outcome("submitted" if accepted else "null_submit_failed")
 
     while True:
         seconds_left = run_ends - time.monotonic()
@@ -349,6 +375,28 @@ def run_stage(
                 if selfcheck_first is not False:
                     feature_event("SELFCHECK", "answered", changed=str(solution).strip() != selfcheck_first.strip())
                     selfcheck_first = False
+            if FEATURES["VERIFY_UNDO"] and stage == "mitigation" and writes_since_verify > 0:
+                writes_since_verify = 0
+                time.sleep(VERIFY_WAIT_S)
+                after_f = inspect_tools.scoped(inspect_tools.sweep_findings(), namespace)
+                after = inspect_tools.finding_keys(after_f)
+                v = inspect_tools.verdict(undo_baseline or set(), after)
+                feature_event("VERIFY_UNDO", "verified", verdict=v, before=len(undo_baseline or ()), after=len(after))
+                listed = "\n".join(f"- {k} {key}: {t}" for k, key, t in after_f[:15]) or "- nothing"
+                if v in ("worse", "no_effect") and undo_snaps and undo_rounds < MAX_UNDO_ROUNDS:
+                    undone = [inspect_tools.restore(snap) for snap in reversed(list(undo_snaps.values()))]
+                    undo_rounds += 1
+                    undo_snaps.clear()
+                    feature_event("VERIFY_UNDO", "undone", objects=len(undone), round=undo_rounds)
+                    why = ("a problem appeared that was not there before your changes" if v == "worse"
+                           else "the problems seen before your changes are all still there")
+                    session.add_user(VERIFY_UNDO_FAIL_TEXT.format(seconds=VERIFY_WAIT_S, why=why, findings=listed,
+                                                                  undone="\n".join(f"- {u}" for u in undone)))
+                    continue
+                if v == "partial" and not partial_told:
+                    partial_told = True
+                    session.add_user(VERIFY_PARTIAL_TEXT.format(seconds=VERIFY_WAIT_S, findings=listed))
+                    continue
             if FEATURES["SOAK"] and stage == "mitigation" and not soak_done and _writes_total > 0:
                 soak_done = True
                 feature_event("SOAK", "waiting", seconds=SOAK_S)
@@ -374,11 +422,23 @@ def run_stage(
             session.add_user("Submission was not accepted by the conductor. Check the stage is still active and retry.")
             continue
 
+        if FEATURES["VERIFY_UNDO"] and stage == "mitigation" and action_name in WRITE_ACTIONS and action_name in actions:
+            if undo_baseline is None:
+                undo_baseline = inspect_tools.finding_keys(inspect_tools.scoped(inspect_tools.sweep_findings(), namespace))
+                feature_event("VERIFY_UNDO", "baseline", findings=len(undo_baseline))
+            for kind, name, ns in inspect_tools.write_targets(action_name, args, namespace):
+                key = (kind.lower(), name, ns)
+                if key not in undo_snaps:
+                    snap = inspect_tools.snapshot(kind, name, ns)
+                    if snap is not None:
+                        undo_snaps[key] = snap
+                        feature_event("VERIFY_UNDO", "recorded", kind=kind, object=name, absent=snap.get("absent", False))
         obs, valid = dispatch_action(action_name, args, namespace, actions)
         if valid:
             used += 1
             if action_name in WRITE_ACTIONS:
                 _writes_total += 1
+                writes_since_verify += 1
                 transcript.write({"type": "write_action", "stage": stage, "action": action_name, "args": args})
         action_record = {"type": "action", "stage": stage, "action": action_name, "args": args, "valid": valid}
         if LOG_OBS:
@@ -435,7 +495,8 @@ def main() -> None:
     if action_space not in ("typed", "typed+shell"):
         logger.warning(f"unknown REACT_V1_ACTION_SPACE {action_space!r}; defaulting to 'typed'")
         action_space = "typed"
-    actions = actions_for(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"])
+    actions = actions_for(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
+                          health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"])
     knowledge = ""
     if FEATURES["K8S_KNOWLEDGE"]:
         notes = Path(__file__).resolve().parent / "knowledge" / "k8s_notes.md"
@@ -473,8 +534,10 @@ def main() -> None:
     session = Session()
     session.open(
         {"role": "system", "content": system_text(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
-                                                     optional_args=FEATURES["OPTIONAL_ARGS"], knowledge=knowledge)},
-        instance_text(app_info, fault_exists=FEATURES["FAULT_EXISTS"], survey_first=FEATURES["SURVEY"], ledger=FEATURES["LEDGER"]),
+                                                     optional_args=FEATURES["OPTIONAL_ARGS"], knowledge=knowledge,
+                                                     health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"])},
+        instance_text(app_info, fault_exists=FEATURES["FAULT_EXISTS"], survey_first=FEATURES["SURVEY"], ledger=FEATURES["LEDGER"],
+                      health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], verify_undo=FEATURES["VERIFY_UNDO"]),
     )
     transcript.write({"type": "meta", **meta, "conductor_url": CONDUCTOR_URL})
 
