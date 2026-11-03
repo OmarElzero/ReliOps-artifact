@@ -55,6 +55,7 @@ Tags are in `docs/research/open-questions.md`. Confirm the tags when the card is
 
 | Attempt | Agent / action space / model | Result (diag, mit, e2e) | failure_mode_tag | story | What we learned |
 |---|---|---|---|---|---|
+| Ladder round 1 (3 Nov 2026), 15 variants x 1 repeat | `reliops_v1` / `reliops_v2` variants, `gemini-3.5-flash-lite` (agent and judge) | diag 0/15, mit 0/15, e2e 0/15 | - | stories in the Lab export | Every run read the memory request `4971424645120m` as about 5 TB and shrank it; the `m` suffix means milli, so it is about 4.6 GiB. None looked at PriorityClasses or preemption events, and the fix check refuses shrinking. Needs Kubernetes knowledge, not a different prompt style. |
 
 ## 8. Experiments to run on this problem
 - [ ] Typed vs typed+shell

@@ -52,6 +52,7 @@ Tags are in `docs/research/open-questions.md`. Confirm the tags when the card is
 
 | Attempt | Agent / action space / model | Result (diag, mit, e2e) | failure_mode_tag | story | What we learned |
 |---|---|---|---|---|---|
+| Ladder round 1 (3 Nov 2026), 15 variants x 1 repeat | `reliops_v1` / `reliops_v2` variants, `gemini-3.5-flash-lite` (agent and judge) | diag 7/15, mit 9/15, e2e 7/15 | - | stories in the Lab export | Correct whenever the `profile` Deployment spec was read (`dnsPolicy: None`); wrong runs anchored on 'MongoDB not ready' from the logs. Two runs (c3, p3) diagnosed wrong, then found the setting while fixing: the diagnosis was submitted too early. |
 
 ## 8. Experiments to run on this problem
 - [ ] Does `rollback_deployment` alone fix it (typed-only)?

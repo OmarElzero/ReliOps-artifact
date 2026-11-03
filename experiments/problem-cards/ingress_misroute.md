@@ -50,6 +50,7 @@ Tags are in `docs/research/open-questions.md`. Confirm the tags when the card is
 
 | Attempt | Agent / action space / model | Result (diag, mit, e2e) | failure_mode_tag | story | What we learned |
 |---|---|---|---|---|---|
+| Ladder round 1 (3 Nov 2026), 15 variants x 1 repeat | `reliops_v1` / `reliops_v2` variants, `gemini-3.5-flash-lite` (agent and judge) | diag 2/15, mit 2/15, e2e 2/15 | - | stories in the Lab export | Only c2 and c5 opened the Ingress, and both fixed it. The other 13 blamed transient startup errors or said everything is healthy. The SURVEY action listed the Ingress by name and the agent still did not open it. |
 
 ## 8. Experiments to run on this problem
 - [ ] Typed vs typed+shell

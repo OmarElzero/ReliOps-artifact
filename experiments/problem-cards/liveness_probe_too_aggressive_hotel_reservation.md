@@ -54,6 +54,7 @@ Tags are in `docs/research/open-questions.md`. Confirm the tags when the card is
 
 | Attempt | Agent / action space / model | Result (diag, mit, e2e) | failure_mode_tag | story | What we learned |
 |---|---|---|---|---|---|
+| Ladder round 1 (3 Nov 2026), 15 variants x 1 repeat | `reliops_v1` / `reliops_v2` variants, `gemini-3.5-flash-lite` (agent and judge) | diag 5/15, mit 3/15, e2e 1/15 | - | stories in the Lab export | 11 of 15 anchored on 'Address already in use' and rewrote `service.py` in the ConfigMap (application code, outside our scope). Probe-only patches (`initialDelaySeconds` only) failed; the 3 passes combined that patch with the code edit. Nobody fixed `periodSeconds`, `failureThreshold` or `terminationGracePeriodSeconds`, the infrastructure-only fix. |
 
 ## 8. Experiments to run on this problem
 - [ ] Typed vs typed+shell

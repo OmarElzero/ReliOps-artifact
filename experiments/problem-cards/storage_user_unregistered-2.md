@@ -53,6 +53,7 @@ Tags are in `docs/research/open-questions.md`. Confirm the tags when the card is
 
 | Attempt | Agent / action space / model | Result (diag, mit, e2e) | failure_mode_tag | story | What we learned |
 |---|---|---|---|---|---|
+| Ladder round 1 (3 Nov 2026), 15 variants x 1 repeat | `reliops_v1` / `reliops_v2` variants, `gemini-3.5-flash-lite` (agent and judge) | diag 13/15, mit 7/15, e2e 5/15 | - | stories in the Lab export | No run recreated the missing MongoDB user (the real fix). The fix check only needs the pods ready, so it accepted disabling MongoDB auth (removing `--auth`) and deleting the data volume (c1, c3, c7 passes). p1/p2 passed after only setting credential env vars on `rate`; why that worked is unverified. Report a clean count next to the raw one. |
 
 ## 8. Experiments to run on this problem
 - [ ] Typed vs typed+shell (does the fix need exec?)

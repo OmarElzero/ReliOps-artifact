@@ -53,6 +53,7 @@ Tags are in `docs/research/open-questions.md`. Confirm the tags when the card is
 
 | Attempt | Agent / action space / model | Result (diag, mit, e2e) | failure_mode_tag | story | What we learned |
 |---|---|---|---|---|---|
+| Ladder round 1 (3 Nov 2026), 15 variants x 1 repeat | `reliops_v1` / `reliops_v2` variants, `gemini-3.5-flash-lite` (agent and judge) | diag 14/15, mit 13/15, e2e 12/15 | - | stories in the Lab export | Easy: removing `hostPort` from the Deployment. c5 deleted the pod instead (symptom fix); typed-only t1 has no action that edits ports (as predicted). Three runs blamed a 'rolling update' instead of the node-exporter. |
 
 ## 8. Experiments to run on this problem
 - [ ] Typed vs typed+shell

@@ -51,6 +51,7 @@ Tags are in `docs/research/open-questions.md`. Confirm the tags when the card is
 
 | Attempt | Agent / action space / model | Result (diag, mit, e2e) | failure_mode_tag | story | What we learned |
 |---|---|---|---|---|---|
+| Ladder round 1 (3 Nov 2026), 15 variants x 1 repeat | `reliops_v1` / `reliops_v2` variants, `gemini-3.5-flash-lite` (agent and judge) | diag 0/15, mit 3/15, e2e 0/15 | - | stories in the Lab export | No run inspected the Ingress or its TLS secret; 9 said everything is healthy. The 3 fix-check passes (V0, B, c7) came from the Ingress being absent ('not found'), which the check accepts as deleted: an environment artifact, not a fix. |
 
 ## 8. Experiments to run on this problem
 - [ ] Typed vs typed+shell
