@@ -81,8 +81,17 @@ HARD_CAP = int(os.environ.get("REACT_V1_HARD_CAP", "40"))
 WRAP_UP_CALLS = int(os.environ.get("REACT_V1_WRAP_UP_CALLS", "3"))
 RETRY_WAIT_S = float(os.environ.get("REACT_V1_RETRY_WAIT_S", "30"))
 # Consecutive unusable model replies (empty, errors) before the stage gives up. v1 gave up after 2; round 1 lost 46 of 239
-# attempts that way, most by the fifth call. Waits grow: RETRY_WAIT_S x 1, x 2, x 3.
-MAX_MODEL_FAILURES = int(os.environ.get("REACT_V1_MAX_MODEL_FAILURES", "4"))
+# attempts that way, most by the fifth call. v2.0 gave up after 4 (waits 30, 60, 90 s, about 4 minutes in all); the second blank
+# smoke (6 Nov) lost a run to a provider window longer than that. v2.2 (C-013): give up after 7, waits grow RETRY_WAIT_S x n and
+# are capped at RETRY_WAIT_MAX_S, so 30, 60, 90, 120, 120, 120 s (about 9 minutes of waiting in all).
+MAX_MODEL_FAILURES = int(os.environ.get("REACT_V1_MAX_MODEL_FAILURES", "7"))
+RETRY_WAIT_MAX_S = float(os.environ.get("REACT_V1_RETRY_WAIT_MAX_S", "120"))
+
+
+def retry_wait(consecutive_failures: int) -> float:
+    return min(RETRY_WAIT_S * consecutive_failures, RETRY_WAIT_MAX_S)
+
+
 MAX_FORMAT_ERRORS = 3
 
 # Blank-reply recovery (approved by Omar 5 Nov 2026, experiments/proposals/blank-reply-recovery.md, C-012). On some conversations
@@ -363,7 +372,7 @@ def run_stage(
                 transcript.write({"type": "blank_recovery", "stage": stage, "call": call_offset + model_calls})
                 logger.warning("blank reply: retrying at once with earlier replies sent as user notes")
                 continue
-            time.sleep(RETRY_WAIT_S * consecutive_failures)
+            time.sleep(retry_wait(consecutive_failures))
             continue
         consecutive_failures = 0
         session.add_assistant(reply)
