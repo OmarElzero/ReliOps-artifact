@@ -85,6 +85,25 @@ RETRY_WAIT_S = float(os.environ.get("REACT_V1_RETRY_WAIT_S", "30"))
 MAX_MODEL_FAILURES = int(os.environ.get("REACT_V1_MAX_MODEL_FAILURES", "4"))
 MAX_FORMAT_ERRORS = 3
 
+# Blank-reply recovery (approved by Omar 5 Nov 2026, experiments/proposals/blank-reply-recovery.md, C-012). On some conversations
+# `gemini-3.5-flash-lite` answers with nothing, every time, when the agent's earlier replies are sent as assistant turns; sent as
+# user notes the same conversation gets a normal answer (replays: blank 8/8 + 5/6 as saved, normal 6/6 as notes). So after the
+# first blank reply the stage retries at once with the earlier replies as user notes and stays in that form. Only a blank reply
+# triggers it; a run without one sends exactly the messages it sent before. Set REACT_V1_BLANK_RECOVERY=off for the old behaviour.
+BLANK_RECOVERY = os.environ.get("REACT_V1_BLANK_RECOVERY", "on").strip().lower() not in ("off", "0", "false", "no")
+NOTE_PREFIX = "[your previous reply]\n"
+
+
+def as_notes(messages: list[dict]) -> list[dict]:
+    """The conversation with every assistant turn re-sent as a user message (the original list is not changed)."""
+    return [{"role": "user", "content": NOTE_PREFIX + str(m.get("content") or "")} if m.get("role") == "assistant" else m for m in messages]
+
+
+def is_blank_reply(error) -> bool:
+    """True for the provider's "said nothing" case, not for a reply cut off at the token limit or any other error."""
+    text = str(error or "")
+    return text.startswith("empty model reply") and "truncated" not in text
+
 
 _CHECKLIST_RE = re.compile(r"claims? and support|supporting observation|alternative explanation", re.IGNORECASE)
 
@@ -271,6 +290,7 @@ def run_stage(
     used = 0
     format_errors = 0
     consecutive_failures = 0
+    note_mode = False              # blank-reply recovery: earlier agent replies are sent as user notes (see as_notes)
     wrap_up_sent = False
     wrap_up_calls = 0
     empty_rejections = 0
@@ -319,7 +339,8 @@ def run_stage(
             wrap_up_calls += 1
 
         model_calls += 1
-        reply = backend.complete(session.messages, step_dir=Path(AGENT_LOGS_DIR) / "steps" / f"{stage}_{call_offset + model_calls:02d}")
+        reply = backend.complete(as_notes(session.messages) if note_mode else session.messages,
+                                 step_dir=Path(AGENT_LOGS_DIR) / "steps" / f"{stage}_{call_offset + model_calls:02d}")
         usage_records.append(reply.usage)
         transcript.write(
             {
@@ -329,6 +350,7 @@ def run_stage(
                 "content": (reply.content or "")[:20000],
                 "usage": reply.usage,
                 "error": reply.error,
+                **({"blank_recovery": True} if note_mode else {}),
             }
         )
         if reply.error:
@@ -336,6 +358,11 @@ def run_stage(
             logger.warning(f"model call unusable: {reply.error}")
             if consecutive_failures >= MAX_MODEL_FAILURES:
                 return outcome("model_failure")
+            if BLANK_RECOVERY and not note_mode and is_blank_reply(reply.error):
+                note_mode = True
+                transcript.write({"type": "blank_recovery", "stage": stage, "call": call_offset + model_calls})
+                logger.warning("blank reply: retrying at once with earlier replies sent as user notes")
+                continue
             time.sleep(RETRY_WAIT_S * consecutive_failures)
             continue
         consecutive_failures = 0
