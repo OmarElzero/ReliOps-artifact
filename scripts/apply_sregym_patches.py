@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the 3 required patches to a fresh SREGym clone, idempotently.
+"""Apply the 4 required patches to a fresh SREGym clone, idempotently.
 
 What each one does: REPRODUCE.md in the published artifact (team copy: `experiments/testbed-setup.md` §6b).
 Safe to re-run: each patch checks whether its marker is already present before touching anything,
@@ -85,6 +85,24 @@ def patch_container_runner(sregym_dir: Path) -> bool:
     return True
 
 
+def patch_helm4_list(sregym_dir: Path) -> bool:
+    """SREGym's ingress-nginx check runs `helm list --all --namespace ...`. Helm 4 removed `--all` (it lists every release by
+    default), so on Helm 4 every problem that deploys ingress-nginx (ingress_misroute, expired_tls_hotel_reservation, ...) ends as
+    'The app failed to deploy: unknown flag: --all' (seen 5 Nov 2026). The same file works on Helm 3 without the flag in the
+    normal case (Helm 3 then hides only releases stuck in pending or uninstalling states). Helm 4 is needed anyway for
+    `helm upgrade --server-side` (social-network faults). Source for the removal: helm/helm issue #31784 (secondary, not the release notes)."""
+    path = sregym_dir / "sregym" / "observer" / "ingress_nginx.py"
+    text = path.read_text(encoding="utf-8")
+    old = '                        "list",\n                        "--all",\n                        "--namespace",\n'
+    new = '                        "list",\n                        "--namespace",\n'
+    if old not in text:
+        if '"list",\n                        "--namespace",' in text:
+            return False
+        raise RuntimeError(f"{path}: expected `helm list --all` block not found — SREGym changed, check by hand")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+    return True
+
+
 def main() -> None:
     sregym_dir = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else REPO_ROOT / "external" / "envs" / "sregym"
     if not sregym_dir.is_dir():
@@ -95,6 +113,7 @@ def main() -> None:
         "agents.yaml (register reliops_v1 and reliops_v2)": patch_agents_yaml(sregym_dir),
         "provider_endpoints.py (egress allowlist)": patch_provider_endpoints(sregym_dir),
         "container_runner.py (forward REACT_V1_* env switches)": patch_container_runner(sregym_dir),
+        "observer/ingress_nginx.py (no `helm list --all`, Helm 4 removed it)": patch_helm4_list(sregym_dir),
     }
     for name, changed in results.items():
         print(f"{'patched' if changed else 'already applied, skipped'}: {name}")
