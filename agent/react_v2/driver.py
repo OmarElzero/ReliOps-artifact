@@ -94,7 +94,7 @@ def retry_wait(consecutive_failures: int) -> float:
 
 MAX_FORMAT_ERRORS = 3
 
-# Blank-reply recovery (approved by Omar 5 Nov 2026, experiments/proposals/blank-reply-recovery.md, C-012). On some conversations
+# Blank-reply recovery (approved 5 Nov 2026, experiments/proposals/blank-reply-recovery.md, C-012). On some conversations
 # `gemini-3.5-flash-lite` answers with nothing, every time, when the agent's earlier replies are sent as assistant turns; sent as
 # user notes the same conversation gets a normal answer (replays: blank 8/8 + 5/6 as saved, normal 6/6 as notes). So after the
 # first blank reply the stage retries at once with the earlier replies as user notes and stays in that form. Only a blank reply
