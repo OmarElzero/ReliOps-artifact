@@ -29,6 +29,8 @@ SWITCHES = {
     "VERIFY_UNDO": "R2 - record objects before each mitigation write; on submit, wait, re-run the health checks, undo if worse or no effect",
     # Round 3 (owner approved 8 Nov 2026, change C-014): workflow change, not a prompt line. Content from kubernetes.io.
     "ROUTING": "R3 - triage, choose a problem category, load its general procedure (knowledge/procedures.md); writes and the diagnosis wait until one is loaded",
+    "ROUTE_REVIEW": "R3 - needs ROUTING: before the diagnosis is accepted, check it against the loaded procedure's own conclusion test and the triage symptoms; if it does not hold, load another category",
+    "ROUTE_MULTI": "R3 - needs ROUTING: load one procedure when the abnormal things are in one place, up to two (never more than three) when they are in unrelated places or nothing looks abnormal",
     # Calibration only (plan 14, step M1): reads nothing, changes nothing, submits at once. A problem this agent passes has a
     # check that passes without a fix.
     "NULL_AGENT": "M1 - do-nothing agent: no model call, submits a fixed non-diagnosis and an empty fix",

@@ -42,12 +42,13 @@ from clients.mini_sre.backends import ApiBackend  # noqa: E402
 
 from . import features  # noqa: E402
 from . import inspect_tools  # noqa: E402
-from .actions import OPTIONAL_ARGS, PROCEDURES_FILE, WRITE_ACTIONS, actions_for  # noqa: E402
+from .actions import OPTIONAL_ARGS, PROCEDURES_FILE, WRITE_ACTIONS, actions_for, before_conclude  # noqa: E402
 from .pricing import cost_usd, price_note  # noqa: E402
 from .prompts import (  # noqa: E402
     ACTION_OBSERVATION_TEMPLATE,
     EMPTY_DIAGNOSIS_TEXT,
     FORMAT_ERROR_TEXT,
+    ROUTE_REVIEW_TEXT,
     ROUTING_GATE_TEXT,
     MISSING_ARGS_TEXT,
     SELFCHECK_TEXT,
@@ -309,6 +310,8 @@ def run_stage(
     wrap_up_sent = False
     wrap_up_calls = 0
     empty_rejections = 0
+    review_asked = False
+    review_loaded_at_ask = 0
     selfcheck_format_asked = False
     selfcheck_first: str | None = None  # the diagnosis as first submitted, when the self-check asked about it
     soak_done = False
@@ -411,6 +414,19 @@ def run_stage(
                 feature_event("EMPTY_SUBMIT_GUARD", "rejected_empty_diagnosis", count=empty_rejections)
                 session.add_user(EMPTY_DIAGNOSIS_TEXT)
                 continue
+            if FEATURES["ROUTE_REVIEW"] and FEATURES["ROUTING"] and stage == "diagnosis" and str(solution or "").strip() \
+                    and _procedures_loaded:
+                if not review_asked:
+                    review_asked = True
+                    review_loaded_at_ask = len(_procedures_loaded)
+                    feature_event("ROUTE_REVIEW", "asked", loaded=",".join(_procedures_loaded))
+                    done = list(dict.fromkeys(_procedures_loaded))
+                    tests = "\n".join(f"   - {c}: {before_conclude(c)}" for c in done)
+                    session.add_user(ROUTE_REVIEW_TEXT.format(loaded=", ".join(done), tests=tests))
+                    continue
+                if review_loaded_at_ask is not None:
+                    feature_event("ROUTE_REVIEW", "answered", rerouted=len(_procedures_loaded) > review_loaded_at_ask)
+                    review_loaded_at_ask = None
             if FEATURES["SELFCHECK"] and stage == "diagnosis" and str(solution or "").strip():
                 if selfcheck_first is None:
                     selfcheck_first = str(solution)
@@ -550,6 +566,9 @@ def main() -> None:
         action_space = "typed"
     actions = actions_for(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
                           health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], routing=FEATURES["ROUTING"])
+    if (FEATURES["ROUTE_REVIEW"] or FEATURES["ROUTE_MULTI"]) and not FEATURES["ROUTING"]:
+        logger.error("REACT_V1_ROUTE_REVIEW and REACT_V1_ROUTE_MULTI need REACT_V1_ROUTING=on")
+        sys.exit(EXIT_INFRA)
     if FEATURES["ROUTING"] and not PROCEDURES_FILE.is_file():
         logger.error("REACT_V1_ROUTING is on but knowledge/procedures.md does not exist")
         sys.exit(EXIT_INFRA)
@@ -595,7 +614,7 @@ def main() -> None:
                                                      routing=FEATURES["ROUTING"])},
         instance_text(app_info, fault_exists=FEATURES["FAULT_EXISTS"], survey_first=FEATURES["SURVEY"], ledger=FEATURES["LEDGER"],
                       health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], verify_undo=FEATURES["VERIFY_UNDO"],
-                      routing=FEATURES["ROUTING"]),
+                      routing=FEATURES["ROUTING"], route_multi=FEATURES["ROUTE_MULTI"]),
     )
     transcript.write({"type": "meta", **meta, "conductor_url": CONDUCTOR_URL})
 

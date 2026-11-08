@@ -109,10 +109,29 @@ VERIFY_UNDO_TEXT = """
     told why, so you can try a different fix."""
 
 
-def routing_text() -> str:
+def routing_text(multi: bool = False) -> str:
     from .actions import procedure_hints
     cats = "\n".join(f"   - {c}: {h}" for c, h in procedure_hints())
-    return ROUTING_TEXT.format(categories=cats)
+    return ROUTING_TEXT.format(categories=cats) + (ROUTE_MULTI_TEXT if multi else "")
+
+
+ROUTE_MULTI_TEXT = """
+
+How many procedures to load (this replaces "if two fit, load the more specific one first"): after triage, count the
+distinct places that look abnormal; a place is one component or one kind of object.
+- Everything abnormal is in one place: load the one procedure that fits it and follow it. Do not load more.
+- The abnormal things are in unrelated places, or nothing looks abnormal: load the two most likely categories, one after
+  the other, and say after each what it ruled in and out. Never load more than three in total."""
+
+ROUTE_REVIEW_TEXT = """Before the diagnosis is accepted, review the route you took.
+1. You loaded: {loaded}. The conclusion test of each is:
+{tests}
+   For each, say whether you met it and give the step number of the observation that shows it.
+2. List every abnormal thing from your triage and say whether your diagnosis explains it.
+3. If a test is not met, or something abnormal is left unexplained, the route may be wrong: go back to the route phase,
+   load the next most likely category that you have not loaded yet, follow it, and then submit.
+Submit the diagnosis itself (what is wrong, where, and the key evidence), not this review: unchanged if it holds,
+corrected if it does not."""
 
 
 ROUTING_TEXT = """
@@ -132,13 +151,13 @@ Write actions and the diagnosis submission are refused until you have loaded at 
 
 def instance_text(app_info: dict, *, fault_exists: bool = False, survey_first: bool = False, ledger: bool = False,
                   health_sweep: bool = False, change_diff: bool = False, verify_undo: bool = False,
-                  routing: bool = False) -> str:
+                  routing: bool = False, route_multi: bool = False) -> str:
     app_name = app_info.get("app_name", "unknown")
     namespace = app_info.get("namespace", "default")
     descriptions = app_info.get("descriptions", "")
     extra = (FAULT_EXISTS_TEXT if fault_exists else "") + (SURVEY_TEXT if survey_first else "") + (LEDGER_TEXT if ledger else "") \
         + (HEALTH_SWEEP_TEXT if health_sweep else "") + (CHANGE_DIFF_TEXT if change_diff else "") + (VERIFY_UNDO_TEXT if verify_undo else "") \
-        + (routing_text() if routing else "")
+        + (routing_text(route_multi) if routing else "")
     return f"""You are diagnosing and fixing an issue in the '{app_name}' application, namespace '{namespace}'.
 
 {descriptions}

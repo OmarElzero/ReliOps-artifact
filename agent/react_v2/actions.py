@@ -186,6 +186,12 @@ def procedure_hints() -> list[tuple[str, str]]:
     return hints
 
 
+def before_conclude(category: str) -> str:
+    """The "Before you conclude:" line of one procedure (empty if unknown)."""
+    body = procedures().get(str(category).strip().lower(), "")
+    return next((l.removeprefix("Before you conclude:").strip() for l in body.splitlines() if l.startswith("Before you conclude:")), "")
+
+
 def load_procedure(category: str = "") -> ActionResult:
     """Read-only: the general investigation procedure for one problem category.
     With no category it returns the menu (id and "Points here when" line) instead of an error."""
