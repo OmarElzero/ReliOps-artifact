@@ -36,7 +36,7 @@ Sources: kubernetes.io "Debug Pods" (crashing or unhealthy), "Determine the Reas
 ## network
 Points here when: a client cannot reach a service (connection refused, timeouts, 502/503/404 from a proxy or ingress, name resolution errors), while the backend pods look healthy.
 Follow the Kubernetes "Debug Services" order; stop at the first check that fails:
-1. Does the Service exist (get_resource kind=service)?
+1. Does the Service exist? List them with exec_kubectl_guarded (kubectl get svc -n <namespace>).
 2. Is there a NetworkPolicy in the namespace that selects the target pods? Read its rules.
 3. Name resolution: does the client resolve the service name? Check the pod's DNS settings (dnsPolicy, dnsConfig) and that the cluster DNS pods in kube-system are running.
 4. Is the Service defined correctly: the port is listed, targetPort matches the containerPort (or the named port exists on the pods), the protocol is right.
@@ -49,7 +49,7 @@ Sources: kubernetes.io "Debug Services", "Debugging DNS Resolution".
 
 ## storage
 Points here when: pods wait on volumes (FailedMount, FailedAttachVolume, unbound PersistentVolumeClaim), or an application reports read-only, missing or full data.
-1. get_resource kind=persistentvolumeclaim: status Bound or Pending; describe a Pending claim and read its events.
+1. List the claims with exec_kubectl_guarded (kubectl get pvc -n <namespace>): status Bound or Pending for every claim; describe a Pending claim and read its events.
 2. Check the claim's storageClassName exists and has a provisioner; check requested size and access mode against the volume it should bind to.
 3. For a bound claim, check the PersistentVolume it binds to (status, reclaim policy, node affinity).
 4. Read the pod's volumes and volumeMounts: the claim, ConfigMap or Secret each mount names must exist.
@@ -60,7 +60,7 @@ Sources: kubernetes.io "Persistent Volumes", "Debug Pods".
 ## capacity
 Points here when: pods are Pending for resources, are evicted or preempted, are OOMKilled, are throttled and slow, or a namespace refuses new pods with a quota error.
 1. describe the waiting or evicted pod: the event says insufficient cpu or memory, preempted, evicted, or exceeded quota.
-2. Compare each container's requests and limits with the node allocatable (get_resource kind=node) and with what it needs.
+2. Compare each container's requests and limits with the node allocatable (exec_kubectl_guarded: kubectl get nodes, then describe one node by name) and with what it needs.
 3. Check ResourceQuota and LimitRange objects in the namespace.
 4. Check PriorityClasses: which pods have a higher priority, and whether they preempt the ones that fail.
 5. Ask what changed: a request, a limit, a replica count, a priority, a quota. A capacity symptom with no change usually means a workload grew.
@@ -70,7 +70,7 @@ Sources: kubernetes.io "Resource Management for Pods and Containers", "Pod Prior
 
 ## config
 Points here when: the application starts but misbehaves or refuses work: authentication or authorization errors between services, wrong endpoints or feature behaviour, certificate or TLS errors, missing keys.
-1. Read the failing component's environment (get_resource on its Deployment) and the ConfigMaps and Secrets it references.
+1. Read the failing component's environment (get_resource on its Deployment, by name) and the ConfigMaps and Secrets it references.
 2. Check each reference resolves: the ConfigMap or Secret exists and holds the key named.
 3. For credentials: the value one side sends must match what the other side expects; compare both sides' configuration, not just one.
 4. For TLS: check the Secret the component uses, the certificate's validity dates and names, and which object points at it.
@@ -91,7 +91,7 @@ Sources: kubernetes.io "Configure Liveness, Readiness and Startup Probes", "Debu
 
 ## node
 Points here when: pods on one node fail together, a node is NotReady or under memory, disk or PID pressure, pods are evicted with node reasons, or the problem follows a node rather than a workload.
-1. get_resource kind=node (or get nodes): status, conditions, taints, allocatable.
+1. List the nodes with exec_kubectl_guarded (kubectl get nodes): status, conditions, taints, allocatable.
 2. describe the suspect node: conditions (Ready, MemoryPressure, DiskPressure, PIDPressure, NetworkUnavailable) and recent events.
 3. Check where the failing pods run: if they share a node and healthy copies elsewhere work, the node is the suspect.
 4. Check taints and cordons against the pods' tolerations and selectors.
