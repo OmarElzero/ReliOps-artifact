@@ -165,7 +165,7 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
     if meta.get("features") or meta.get("variant"):
         out.append(f"- agent variant: `{meta.get('variant') or '-'}` · switches on: {', '.join(meta.get('features') or []) or 'none'}")
     for s in submits:
-        out.append(f"- submitted **{s['stage']}** (accepted={s['accepted']})")
+        out.append(f"- submitted **{s['stage']}** (received by the grader: {'yes' if s['accepted'] else 'no'}; this says nothing about whether it was correct, see the log or the results table for the grade)")
     if not any("observation" in r for r in tr if r["type"] == "action"):
         out.append(
             "- note: this transcript has no observations (run with `REACT_V1_LOG_OBS=on` to record what each "
@@ -218,7 +218,7 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
             if thought:
                 out.append("**Thinks:** " + thought.replace("\n", " ")[:900])
             if res["type"] == "submit":
-                out.append(f"**Submits:** {res.get('solution', '')[:1500]}  \n(accepted={res.get('accepted')})")
+                out.append(f"**Submits:** {res.get('solution', '')[:1500]}  \n(received by the grader: {'yes' if res.get('accepted') else 'no'}; not the grade)")
             else:
                 tag = " ⚠ WRITE (changes the cluster)" if res.get("action") in {w["action"] for w in writes} and any(
                     w["action"] == res["action"] and w["args"] == res["args"] for w in writes
