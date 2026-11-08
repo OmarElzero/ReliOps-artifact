@@ -41,6 +41,8 @@ def _action_list_text(action_space: str, *, survey_tool: bool = False, catalogue
                                             health_sweep=health_sweep, change_diff=change_diff, routing=routing).items():
         kind = "write" if name in WRITE_ACTIONS else "read"
         shown = list(arg_names)
+        if name == "load_procedure":
+            shown = ["category=<one id from the category list>"]   # a placeholder, never a real id (no bias towards one category)
         if optional_args:
             shown += [f"[{a}]" for a in OPTIONAL_ARGS.get(name, [])]
         lines.append(f"- {name}({', '.join(shown)})  [{kind}]")

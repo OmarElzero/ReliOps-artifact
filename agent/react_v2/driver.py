@@ -260,6 +260,8 @@ def dispatch_action(action_name: str, args: dict, namespace: str, actions: dict)
     """Returns (observation_text, is_valid_action)."""
     args = dict(args)
     args.setdefault("namespace", namespace)
+    if action_name == "load_procedure":
+        args.setdefault("category", "")   # an empty call returns the menu instead of an error
     if action_name not in actions:
         return UNKNOWN_ACTION_TEXT.format(name=action_name), False
     fn, required = actions[action_name]
@@ -484,7 +486,7 @@ def run_stage(
         obs, valid = dispatch_action(action_name, args, namespace, actions)
         if valid:
             used += 1
-            if action_name == "load_procedure" and obs.startswith("<exit_code>0<"):
+            if action_name == "load_procedure" and obs.startswith("<exit_code>0<") and "## procedure: " in obs:
                 _procedures_loaded.append(str(args.get("category", "")).strip().lower())
                 feature_event("ROUTING", "loaded", category=_procedures_loaded[-1], order=len(_procedures_loaded))
             if action_name in WRITE_ACTIONS:

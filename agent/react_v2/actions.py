@@ -186,10 +186,15 @@ def procedure_hints() -> list[tuple[str, str]]:
     return hints
 
 
-def load_procedure(category: str) -> ActionResult:
-    """Read-only: the general investigation procedure for one problem category."""
+def load_procedure(category: str = "") -> ActionResult:
+    """Read-only: the general investigation procedure for one problem category.
+    With no category it returns the menu (id and "Points here when" line) instead of an error."""
     procs = procedures()
     key = str(category or "").strip().lower()
+    if not key:
+        menu = "\n".join(f"- {c}: {h}" for c, h in procedure_hints())
+        return ActionResult("## procedure menu (nothing loaded yet)\n" + menu +
+                            "\nCall load_procedure again and set category to the one id from this list that best explains what you saw.", "", 0)
     if key not in procs:
         return ActionResult("", f"unknown category {category!r}; choose one of: {', '.join(procs)}", 2)
     return ActionResult(f"## procedure: {key}\n{procs[key]}", "", 0)
