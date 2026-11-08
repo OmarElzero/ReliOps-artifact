@@ -42,12 +42,13 @@ from clients.mini_sre.backends import ApiBackend  # noqa: E402
 
 from . import features  # noqa: E402
 from . import inspect_tools  # noqa: E402
-from .actions import OPTIONAL_ARGS, WRITE_ACTIONS, actions_for  # noqa: E402
+from .actions import OPTIONAL_ARGS, PROCEDURES_FILE, WRITE_ACTIONS, actions_for  # noqa: E402
 from .pricing import cost_usd, price_note  # noqa: E402
 from .prompts import (  # noqa: E402
     ACTION_OBSERVATION_TEMPLATE,
     EMPTY_DIAGNOSIS_TEXT,
     FORMAT_ERROR_TEXT,
+    ROUTING_GATE_TEXT,
     MISSING_ARGS_TEXT,
     SELFCHECK_TEXT,
     SELFCHECK_FORMAT_TEXT,
@@ -68,6 +69,9 @@ MAX_UNDO_ROUNDS = int(os.environ.get("REACT_V1_MAX_UNDO_ROUNDS", "2"))
 NULL_DIAGNOSIS = "No diagnosis: this is the do-nothing calibration agent; it observed nothing and changed nothing."
 EMPTY_DIAGNOSIS_RETRIES = 2
 _writes_total = 0  # valid write actions so far in this run (both stages); the soak check only applies after a write
+_procedures_loaded: list[str] = []  # ROUTING: categories loaded so far in this run (both stages)
+ROUTING_GATED = WRITE_ACTIONS - {"exec_kubectl_guarded", "exec_in_pod"}  # these two also serve reads, so triage may use them
+ROUTING_GATE_MAX = 2  # refusals per stage before the gate lets the action through, so a stuck model cannot stall
 
 API_HOSTNAME = os.getenv("API_HOSTNAME", "localhost")
 API_PORT = os.getenv("API_PORT", "8000")
@@ -311,6 +315,7 @@ def run_stage(
     undo_rounds = 0
     partial_told = False
     writes_since_verify = 0
+    gate_refusals = 0
 
     def feature_event(name: str, event: str, **extra) -> None:
         transcript.write({"type": "feature", "name": name, "stage": stage, "event": event, **extra})
@@ -388,6 +393,13 @@ def run_stage(
 
         action_name = parsed.get("action")
         args = parsed.get("args", {})
+
+        if FEATURES["ROUTING"] and not _procedures_loaded and gate_refusals < ROUTING_GATE_MAX and (
+                (action_name == "submit" and stage == "diagnosis") or (action_name in ROUTING_GATED and action_name in actions)):
+            gate_refusals += 1
+            feature_event("ROUTING", "refused", action=action_name, count=gate_refusals)
+            session.add_user(ROUTING_GATE_TEXT.format(what="The diagnosis submission" if action_name == "submit" else f"The write action {action_name!r}"))
+            continue
 
         if action_name == "submit":
             solution = args.get("solution", "")
@@ -472,6 +484,9 @@ def run_stage(
         obs, valid = dispatch_action(action_name, args, namespace, actions)
         if valid:
             used += 1
+            if action_name == "load_procedure" and obs.startswith("<exit_code>0<"):
+                _procedures_loaded.append(str(args.get("category", "")).strip().lower())
+                feature_event("ROUTING", "loaded", category=_procedures_loaded[-1], order=len(_procedures_loaded))
             if action_name in WRITE_ACTIONS:
                 _writes_total += 1
                 writes_since_verify += 1
@@ -532,7 +547,10 @@ def main() -> None:
         logger.warning(f"unknown REACT_V1_ACTION_SPACE {action_space!r}; defaulting to 'typed'")
         action_space = "typed"
     actions = actions_for(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
-                          health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"])
+                          health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], routing=FEATURES["ROUTING"])
+    if FEATURES["ROUTING"] and not PROCEDURES_FILE.is_file():
+        logger.error("REACT_V1_ROUTING is on but knowledge/procedures.md does not exist")
+        sys.exit(EXIT_INFRA)
     knowledge = ""
     if FEATURES["K8S_KNOWLEDGE"]:
         notes = Path(__file__).resolve().parent / "knowledge" / "k8s_notes.md"
@@ -571,9 +589,11 @@ def main() -> None:
     session.open(
         {"role": "system", "content": system_text(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
                                                      optional_args=FEATURES["OPTIONAL_ARGS"], knowledge=knowledge,
-                                                     health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"])},
+                                                     health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"],
+                                                     routing=FEATURES["ROUTING"])},
         instance_text(app_info, fault_exists=FEATURES["FAULT_EXISTS"], survey_first=FEATURES["SURVEY"], ledger=FEATURES["LEDGER"],
-                      health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], verify_undo=FEATURES["VERIFY_UNDO"]),
+                      health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], verify_undo=FEATURES["VERIFY_UNDO"],
+                      routing=FEATURES["ROUTING"]),
     )
     transcript.write({"type": "meta", **meta, "conductor_url": CONDUCTOR_URL})
 

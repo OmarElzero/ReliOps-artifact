@@ -27,6 +27,8 @@ SWITCHES = {
     "CHANGE_DIFF": "R2 - read action listing every object changed after creation, objects created in the window, pod-template diffs",
     "OUTPUT_TRIM": "R2 - merge repeated lines in long observations and keep head and tail",
     "VERIFY_UNDO": "R2 - record objects before each mitigation write; on submit, wait, re-run the health checks, undo if worse or no effect",
+    # Round 3 (owner approved 8 Nov 2026, change C-014): workflow change, not a prompt line. Content from kubernetes.io.
+    "ROUTING": "R3 - triage, choose a problem category, load its general procedure (knowledge/procedures.md); writes and the diagnosis wait until one is loaded",
     # Calibration only (plan 14, step M1): reads nothing, changes nothing, submits at once. A problem this agent passes has a
     # check that passes without a fix.
     "NULL_AGENT": "M1 - do-nothing agent: no model call, submits a fixed non-diagnosis and an empty fix",

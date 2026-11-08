@@ -34,10 +34,11 @@ exec_kubectl_guarded only for what no typed action covers."""
 
 
 def _action_list_text(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False,
-                      optional_args: bool = False, health_sweep: bool = False, change_diff: bool = False) -> str:
+                      optional_args: bool = False, health_sweep: bool = False, change_diff: bool = False,
+                      routing: bool = False) -> str:
     lines = []
     for name, (_, arg_names) in actions_for(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2,
-                                            health_sweep=health_sweep, change_diff=change_diff).items():
+                                            health_sweep=health_sweep, change_diff=change_diff, routing=routing).items():
         kind = "write" if name in WRITE_ACTIONS else "read"
         shown = list(arg_names)
         if optional_args:
@@ -47,11 +48,12 @@ def _action_list_text(action_space: str, *, survey_tool: bool = False, catalogue
 
 
 def system_text(action_space: str = "typed", *, survey_tool: bool = False, catalogue_v2: bool = False,
-                optional_args: bool = False, knowledge: str = "", health_sweep: bool = False, change_diff: bool = False) -> str:
+                optional_args: bool = False, knowledge: str = "", health_sweep: bool = False, change_diff: bool = False,
+                routing: bool = False) -> str:
     shell_note = SHELL_NOTE if action_space == "typed+shell" else " You cannot run arbitrary shell commands — only these typed actions exist."
     text = SYSTEM_TEMPLATE.format(
         action_list=_action_list_text(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2, optional_args=optional_args,
-                                      health_sweep=health_sweep, change_diff=change_diff),
+                                      health_sweep=health_sweep, change_diff=change_diff, routing=routing),
         shell_note=shell_note)
     if optional_args:
         text += "\n\nArguments in [brackets] are optional."
@@ -105,13 +107,36 @@ VERIFY_UNDO_TEXT = """
     told why, so you can try a different fix."""
 
 
+def routing_text() -> str:
+    from .actions import procedure_hints
+    cats = "\n".join(f"   - {c}: {h}" for c, h in procedure_hints())
+    return ROUTING_TEXT.format(categories=cats)
+
+
+ROUTING_TEXT = """
+
+## Investigate in phases
+
+Phase 1, triage: get_pod_status and get_events for the namespace (and any overview action you have). Then write
+a one-line symptom summary: what fails, where, since when, and what still works.
+Phase 2, route: choose the category below that best explains the symptom and call load_procedure with it. If two
+fit, load the more specific one first.
+{categories}
+Phase 3, follow the procedure's steps in order and say which step you are on. If its checks all pass, say the
+category is ruled out and load the next most likely one. The louder symptom is often not the cause: prefer the
+category that explains every symptom you saw.
+Write actions and the diagnosis submission are refused until you have loaded at least one procedure."""
+
+
 def instance_text(app_info: dict, *, fault_exists: bool = False, survey_first: bool = False, ledger: bool = False,
-                  health_sweep: bool = False, change_diff: bool = False, verify_undo: bool = False) -> str:
+                  health_sweep: bool = False, change_diff: bool = False, verify_undo: bool = False,
+                  routing: bool = False) -> str:
     app_name = app_info.get("app_name", "unknown")
     namespace = app_info.get("namespace", "default")
     descriptions = app_info.get("descriptions", "")
     extra = (FAULT_EXISTS_TEXT if fault_exists else "") + (SURVEY_TEXT if survey_first else "") + (LEDGER_TEXT if ledger else "") \
-        + (HEALTH_SWEEP_TEXT if health_sweep else "") + (CHANGE_DIFF_TEXT if change_diff else "") + (VERIFY_UNDO_TEXT if verify_undo else "")
+        + (HEALTH_SWEEP_TEXT if health_sweep else "") + (CHANGE_DIFF_TEXT if change_diff else "") + (VERIFY_UNDO_TEXT if verify_undo else "") \
+        + (routing_text() if routing else "")
     return f"""You are diagnosing and fixing an issue in the '{app_name}' application, namespace '{namespace}'.
 
 {descriptions}
@@ -174,3 +199,6 @@ VERIFY_PARTIAL_TEXT = """Check {seconds}s after your changes: some problems seen
 {findings}
 
 If they belong to the incident, fix them too; then submit again."""
+
+ROUTING_GATE_TEXT = """{what} is refused until you load a procedure. Finish the triage, write the one-line symptom summary,
+then call load_procedure with the category that best explains it."""

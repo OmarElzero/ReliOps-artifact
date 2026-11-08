@@ -12,9 +12,11 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import subprocess
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -160,6 +162,44 @@ def exec_in_pod(namespace: str, pod: str, command: str, container: str | None = 
     return _run(args + ["--"] + words, timeout=90)
 
 
+# ---- procedures (switch ROUTING) ----
+
+PROCEDURES_FILE = Path(__file__).resolve().parent / "knowledge" / "procedures.md"
+
+
+def procedures() -> dict[str, str]:
+    """category id -> procedure text, from the "## <id>" sections of knowledge/procedures.md (HTML comments removed)."""
+    text = re.sub(r"<!--.*?-->", "", PROCEDURES_FILE.read_text(encoding="utf-8"), flags=re.S)
+    out: dict[str, str] = {}
+    for block in re.split(r"^## ", text, flags=re.M)[1:]:
+        head, _, body = block.partition("\n")
+        out[head.strip().lower()] = body.strip()
+    return out
+
+
+def procedure_hints() -> list[tuple[str, str]]:
+    """(category, its "Points here when" line) for the prompt's category list."""
+    hints = []
+    for cat, body in procedures().items():
+        first = next((l for l in body.splitlines() if l.startswith("Points here when:")), "")
+        hints.append((cat, first.removeprefix("Points here when:").strip()))
+    return hints
+
+
+def load_procedure(category: str) -> ActionResult:
+    """Read-only: the general investigation procedure for one problem category."""
+    procs = procedures()
+    key = str(category or "").strip().lower()
+    if key not in procs:
+        return ActionResult("", f"unknown category {category!r}; choose one of: {', '.join(procs)}", 2)
+    return ActionResult(f"## procedure: {key}\n{procs[key]}", "", 0)
+
+
+ROUTING_ACTIONS = {
+    "load_procedure": (load_procedure, ["category"]),
+}
+
+
 # ---- shell escape hatch (action_space=typed+shell only) ----
 
 _MCP_SESSION_ID = str(uuid.uuid4())
@@ -261,13 +301,15 @@ WRITE_ACTIONS = {
 
 
 def actions_for(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False,
-                health_sweep: bool = False, change_diff: bool = False) -> dict:
+                health_sweep: bool = False, change_diff: bool = False, routing: bool = False) -> dict:
     """action_space: 'typed' or 'typed+shell'. The keyword switches add actions; all off = the v1 menu."""
     actions = {**TYPED_ACTIONS, **SHELL_ACTIONS} if action_space == "typed+shell" else dict(TYPED_ACTIONS)
     if survey_tool:
         actions.update(SURVEY_ACTIONS)
     if catalogue_v2:
         actions.update(CATALOGUE_V2_ACTIONS)
+    if routing:
+        actions.update(ROUTING_ACTIONS)
     if health_sweep or change_diff:
         from . import inspect_tools  # imported here: inspect_tools imports this module
         if health_sweep:
