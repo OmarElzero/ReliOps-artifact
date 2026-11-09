@@ -122,6 +122,10 @@ def routing_text(multi: bool = False) -> str:
 TRIAGE_EVENT_AGE_TEXT = """Events are history, not the current state. Before you count a Warning event as a symptom, compare its age with the
 age of the object it names and with that object's state now: a warning about a pod that is now Running and Ready, or
 one older than the pod, does not explain a current failure.
+Log lines are history too. Before you count a log error as a symptom, compare its time with the container's start time
+and with the newest lines: errors in the first seconds after a start (connection refused, timeouts, lookups that fail
+while other services are still starting), followed by a line that says the service started or serves, are start-up
+noise. To see whether an error still happens, read only recent lines: `kubectl logs <pod> -n <namespace> --since=5m`.
 If every pod and recent event looks healthy, the fault may be on the way users reach the application: list the Ingresses
 and Services (`kubectl get ingress,services -n <namespace>`) before you choose a category.
 """

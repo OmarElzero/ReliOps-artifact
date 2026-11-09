@@ -84,13 +84,13 @@ Points here when: a client gets connection refused, timeouts, 502/503/404 from a
 
 Does not point here when: the backend pods themselves crash or are not Ready (crash or probes); the error is a TLS or certificate error between two services that connect fine (config).
 
-Known noise: a Service without a selector has no endpoints by design; a headless Service (ClusterIP None) has no cluster IP by design.
+Known noise: a Service without a selector has no endpoints by design; a headless Service (ClusterIP None) has no cluster IP by design; connection refused or timeouts in a client's first seconds after it started, followed by a line that says it serves, are start-up noise.
 
 Steps:
 
-0. Rule-out: exec_kubectl_guarded `kubectl get endpoints -n <namespace>` and `kubectl get ingress -n <namespace>`, then get_logs of the client that fails (the entry service, or the one named in the error).
+0. Rule-out: exec_kubectl_guarded `kubectl get endpoints -n <namespace>` and `kubectl get ingress -n <namespace>`, then the client's recent log (the entry service, or the one named in the error): `kubectl logs <pod> -n <namespace> --since=5m`.
    - IF there is an Ingress → 5 first (the way in is checked before the services behind it).
-   - IF every Service that has a selector lists endpoints AND the client logs show no connection, timeout, 5xx or resolution error → EXIT.
+   - IF every Service that has a selector lists endpoints AND the client's recent log shows no connection, timeout, 5xx or resolution error → EXIT.
    - ELSE → 1.
 1. IF a Service has no endpoints → compare its selector with the pod labels key by key (`kubectl get service <name> -n <namespace> -o yaml` and `kubectl get pods -n <namespace> --show-labels`). A mismatch is the finding.
    - ELSE → 2.
@@ -175,12 +175,12 @@ Points here when: the application runs but refuses or fails work: authentication
 
 Does not point here when: the process crashes before it can serve (start at crash); the client cannot reach the service at all (network).
 
-Known noise: environment variables taken from a ConfigMap do not change in a running pod until it restarts; a ConfigMap mounted as a volume updates after a delay.
+Known noise: environment variables taken from a ConfigMap do not change in a running pod until it restarts; a ConfigMap mounted as a volume updates after a delay; errors in a log's first seconds after start that stop once the service reports it serves.
 
 Steps:
 
-0. Rule-out: get_logs of the component the symptom points to (and of its client), tail 200.
-   - IF neither log shows an authentication, authorization, TLS/certificate/x509, missing key, unknown setting or wrong address error AND the error responses are not coming from it → EXIT.
+0. Rule-out: the recent log of the component the symptom points to and of its client: `kubectl logs <pod> -n <namespace> --since=5m`.
+   - IF neither recent log shows an authentication, authorization, TLS/certificate/x509, missing key, unknown setting or wrong address error AND the error responses are not coming from it → EXIT.
    - ELSE → 1.
 1. Classify the error line. IF TLS, certificate or x509 → 4. IF credentials (auth failed, 401, wrong password or token) → 3. ELSE → 2.
 2. Read the component's configuration: get_resource on its Deployment (env, envFrom, volumes), then each ConfigMap or Secret it references (`kubectl get configmap <name> -n <namespace> -o yaml`, `kubectl describe secret <name> -n <namespace>` for key names). Every referenced object and key must exist and hold the value the error expects.
