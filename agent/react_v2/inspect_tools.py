@@ -678,3 +678,139 @@ def verdict(before: set, after: set) -> str:
     if before and not after:
         return "clear"
     return "unknown"
+
+
+# ---- TLS secret reader (C-021, with PROC_V2): read-only, standard library only -------------------------------------
+# kubectl alone cannot show a certificate's dates (it can only print the base64 PEM) and the agent image has no openssl,
+# so this decodes the X.509 DER directly: subject and issuer common names, DNS names, validity window. The private key is
+# never printed.
+
+_CN_OID = b"\x55\x04\x03"        # 2.5.4.3 commonName
+_SAN_OID = b"\x55\x1d\x11"       # 2.5.29.17 subjectAltName
+
+
+def _tlv(b: bytes, i: int) -> tuple[int, int, int]:
+    """(tag, content start, content end) of the DER element at offset i."""
+    tag, ln = b[i], b[i + 1]
+    i += 2
+    if ln & 0x80:
+        n = ln & 0x7F
+        ln = int.from_bytes(b[i:i + n], "big")
+        i += n
+    return tag, i, i + ln
+
+
+def _children(b: bytes, start: int, end: int) -> list[tuple[int, int, int]]:
+    out, i = [], start
+    while i < end:
+        t, s, e = _tlv(b, i)
+        out.append((t, s, e))
+        i = e
+    return out
+
+
+def _der_time(tag: int, raw: bytes) -> _dt.datetime:
+    s = raw.decode("ascii").rstrip("Z")
+    if tag == 0x17:                                   # UTCTime YYMMDDHHMM[SS]
+        yy = int(s[:2])
+        s = ("19" if yy >= 50 else "20") + s
+    fmt = "%Y%m%d%H%M%S" if len(s) >= 14 else "%Y%m%d%H%M"
+    return _dt.datetime.strptime(s[:14] if len(s) >= 14 else s[:12], fmt).replace(tzinfo=_dt.timezone.utc)
+
+
+def _common_name(b: bytes, s: int, e: int) -> str:
+    for _, rs, re_ in _children(b, s, e):                 # SET
+        for _, as_, ae in _children(b, rs, re_):          # SEQUENCE {OID, value}
+            parts = _children(b, as_, ae)
+            if len(parts) >= 2 and parts[0][0] == 0x06 and b[parts[0][1]:parts[0][2]] == _CN_OID:
+                return b[parts[1][1]:parts[1][2]].decode("utf-8", "replace")
+    return ""
+
+
+def _dns_names(b: bytes, s: int, e: int) -> list[str]:
+    names: list[str] = []
+    for _, xs, xe in _children(b, s, e):                  # [3] -> SEQUENCE of extensions
+        for _, es, ee in _children(b, xs, xe):
+            parts = _children(b, es, ee)
+            if parts and parts[0][0] == 0x06 and b[parts[0][1]:parts[0][2]] == _SAN_OID:
+                t, os_, oe = parts[-1]                    # OCTET STRING holding GeneralNames
+                if t == 0x04:
+                    _, gs, ge = _tlv(b, os_)
+                    names += [b[ns:ne].decode("ascii", "replace") for nt, ns, ne in _children(b, gs, ge) if nt == 0x82]
+    return names
+
+
+def parse_certificate(der: bytes) -> dict:
+    """subject_cn, issuer_cn, dns_names, not_before, not_after of one DER certificate."""
+    _, cs, ce = _tlv(der, 0)
+    _, ts, te = _children(der, cs, ce)[0]                 # tbsCertificate
+    tbs = _children(der, ts, te)
+    if tbs and tbs[0][0] == 0xA0:                         # explicit version
+        tbs = tbs[1:]
+    issuer, validity, subject = tbs[2], tbs[3], tbs[4]
+    nb, na = _children(der, validity[1], validity[2])[:2]
+    ext = next((x for x in tbs[5:] if x[0] == 0xA3), None)
+    return {
+        "subject_cn": _common_name(der, subject[1], subject[2]),
+        "issuer_cn": _common_name(der, issuer[1], issuer[2]),
+        "dns_names": _dns_names(der, ext[1], ext[2]) if ext else [],
+        "not_before": _der_time(nb[0], der[nb[1]:nb[2]]),
+        "not_after": _der_time(na[0], der[na[1]:na[2]]),
+    }
+
+
+def describe_pem(pem: str, now: _dt.datetime | None = None) -> str:
+    import base64
+    now = now or _dt.datetime.now(_dt.timezone.utc)
+    blocks = re.findall(r"-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----", pem, re.S)
+    if not blocks:
+        return "no certificate found in the data"
+    lines = []
+    for k, blk in enumerate(blocks, 1):
+        try:
+            c = parse_certificate(base64.b64decode("".join(blk.split())))
+        except Exception as e:  # noqa: BLE001  a malformed certificate is itself the observation
+            lines.append(f"certificate {k} of {len(blocks)}: could not be decoded ({type(e).__name__})")
+            continue
+        if now > c["not_after"]:
+            state = f"EXPIRED {(now - c['not_after']).days} day(s) ago"
+        elif now < c["not_before"]:
+            state = f"NOT YET VALID (starts in {(c['not_before'] - now).days} day(s))"
+        else:
+            state = f"valid, expires in {(c['not_after'] - now).days} day(s)"
+        lines += [f"certificate {k} of {len(blocks)}:",
+                  f"  subject CN: {c['subject_cn'] or '-'}",
+                  f"  issuer CN:  {c['issuer_cn'] or '-'}" + ("  (self-signed)" if c["issuer_cn"] and c["issuer_cn"] == c["subject_cn"] else ""),
+                  f"  DNS names:  {', '.join(c['dns_names']) or '-'}",
+                  f"  not before: {c['not_before']:%Y-%m-%d %H:%M} UTC",
+                  f"  not after:  {c['not_after']:%Y-%m-%d %H:%M} UTC",
+                  f"  now:        {now:%Y-%m-%d %H:%M} UTC",
+                  f"  state:      {state}"]
+    return "\n".join(lines)
+
+
+def inspect_tls_secret(namespace: str, name: str) -> ActionResult:
+    """Read-only: the certificates in a Secret (tls.crt, and ca.crt if present) with names and validity dates."""
+    import base64
+    r = _run(["kubectl", "get", "secret", name, "-n", namespace, "-o", "json"])
+    if r.exit_code != 0:
+        return r
+    try:
+        obj = json.loads(r.stdout)
+    except ValueError:
+        return ActionResult("", "could not read the Secret as JSON", 1)
+    data = obj.get("data") or {}
+    out = [f"secret {namespace}/{name}, type {obj.get('type') or '-'}, keys: {', '.join(sorted(data)) or 'none'}"]
+    found = False
+    for key in ("tls.crt", "ca.crt"):
+        if key in data:
+            found = True
+            try:
+                pem = base64.b64decode(data[key]).decode("ascii", "replace")
+            except (ValueError, TypeError):
+                out.append(f"{key}: not valid base64")
+                continue
+            out.append(f"{key}:\n{describe_pem(pem)}")
+    if not found:
+        out.append("no tls.crt or ca.crt key in this Secret")
+    return ActionResult("\n".join(out) + "\n", "", 0)

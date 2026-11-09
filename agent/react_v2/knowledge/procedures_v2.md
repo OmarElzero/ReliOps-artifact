@@ -80,7 +80,7 @@ Sources: kubernetes.io "Debug Pods", "Determine the Reason for Pod Failure", "De
 
 ## network
 
-Points here when: a client gets connection refused, timeouts, 502/503/404 from a proxy or ingress, or name resolution errors while the backend pods look healthy.
+Points here when: a client gets connection refused, timeouts, 502/503/404 from a proxy or ingress, or name resolution errors while the backend pods look healthy; or every pod and recent event looks healthy and users reach the application through an Ingress or an exposed Service.
 
 Does not point here when: the backend pods themselves crash or are not Ready (crash or probes); the error is a TLS or certificate error between two services that connect fine (config).
 
@@ -88,7 +88,8 @@ Known noise: a Service without a selector has no endpoints by design; a headless
 
 Steps:
 
-0. Rule-out: exec_kubectl_guarded `kubectl get endpoints -n <namespace>`, then get_logs of the client that fails (the entry service, or the one named in the error).
+0. Rule-out: exec_kubectl_guarded `kubectl get endpoints -n <namespace>` and `kubectl get ingress -n <namespace>`, then get_logs of the client that fails (the entry service, or the one named in the error).
+   - IF there is an Ingress → 5 first (the way in is checked before the services behind it).
    - IF every Service that has a selector lists endpoints AND the client logs show no connection, timeout, 5xx or resolution error → EXIT.
    - ELSE → 1.
 1. IF a Service has no endpoints → compare its selector with the pod labels key by key (`kubectl get service <name> -n <namespace> -o yaml` and `kubectl get pods -n <namespace> --show-labels`). A mismatch is the finding.
@@ -99,15 +100,18 @@ Steps:
    - ELSE → 4.
 4. `kubectl get networkpolicy -n <namespace>`. IF a policy selects the target pods → read its ingress/egress rules against the client's labels and port.
    - ELSE → 5.
-5. For an Ingress: `kubectl describe ingress -n <namespace>`. Each backend must name an existing Service and a port it exposes; a tls section must name an existing Secret of type kubernetes.io/tls (`kubectl get secret <name> -n <namespace>`). IF the Secret's certificate is suspect → load config.
+5. For an Ingress: `kubectl describe ingress -n <namespace>`. Each backend must name an existing Service and a port it exposes.
+   - IF there is a tls section → inspect_tls_secret(namespace, name) for each secretName. The Secret must exist, and its certificate must be valid now and name the Ingress host. IF it is expired, not yet valid, missing or names other hosts → that is the finding.
+   - Read the ingress controller's log for this Ingress: find its pod with `kubectl get pods -A -l app.kubernetes.io/component=controller` (if that finds nothing, `kubectl get ingressclass` names the controller), then get_logs on that pod in its own namespace. Errors that name this Ingress, its host, its Secret or a backend are evidence.
+   - IF the backends and the tls section are sound and the controller log is clean → 1.
 
-Before you conclude: name the broken link (client → name, name → Service, Service → endpoints, endpoints → pod port, policy, Ingress → Service or Secret) and quote the observation that shows it, with its step number.
+Before you conclude: name the broken link (client → Ingress or name, Ingress → certificate, Ingress → Service, name → Service, Service → endpoints, endpoints → pod port, policy) and quote the observation that shows it, with its step number.
 
 EXIT (wrong category): write "network ruled out by step N: <observation>", then load the next most likely category.
 
-Fix families: make the two sides of the broken link agree (selector and labels, port and targetPort, backend and Service, DNS settings); change the side that differs from the rest of the application.
+Fix families: make the two sides of the broken link agree (selector and labels, port and targetPort, backend and Service, DNS settings); change the side that differs from the rest of the application. A bad certificate is replaced by a valid one for the same hosts; if no valid certificate is available, say so in the diagnosis rather than removing TLS.
 
-Sources: kubernetes.io "Debug Services", "Debugging DNS Resolution", "Service", "Ingress", "Network Policies".
+Sources: kubernetes.io "Debug Services", "Debugging DNS Resolution", "Service", "Ingress" (TLS), "Ingress Controllers", "Network Policies"; kubernetes.github.io/ingress-nginx "Troubleshooting" (controller logs).
 
 ## storage
 
@@ -181,7 +185,7 @@ Steps:
 1. Classify the error line. IF TLS, certificate or x509 → 4. IF credentials (auth failed, 401, wrong password or token) → 3. ELSE → 2.
 2. Read the component's configuration: get_resource on its Deployment (env, envFrom, volumes), then each ConfigMap or Secret it references (`kubectl get configmap <name> -n <namespace> -o yaml`, `kubectl describe secret <name> -n <namespace>` for key names). Every referenced object and key must exist and hold the value the error expects.
 3. Credentials: find the setting on both sides (the client that sends and the server that checks). They must match; compare both, not one.
-4. TLS: find which object holds the certificate: the Ingress tls section (`kubectl describe ingress -n <namespace>`), or a Secret of type kubernetes.io/tls mounted by the server (keys tls.crt and tls.key). Read the error words: expired / not yet valid → the certificate dates; unknown authority → the CA bundle on the client; name mismatch → the names in the certificate against the host called.
+4. TLS: find which object holds the certificate: the Ingress tls section (`kubectl describe ingress -n <namespace>`), or a Secret of type kubernetes.io/tls mounted by the server (keys tls.crt and tls.key). Read it with inspect_tls_secret(namespace, name): it shows the names and the validity dates. Read the error words: expired / not yet valid → the dates; unknown authority → the CA bundle on the client; name mismatch → the names in the certificate against the host called.
    - IF cert-manager is installed (`kubectl get certificates -n <namespace>` works) → read READY and the expiry time in `kubectl describe certificate <name> -n <namespace>`.
 5. Compare with the previous revision: `kubectl rollout history deployment/<name> -n <namespace>`; a recent template change is the suspect.
 

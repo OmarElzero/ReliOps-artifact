@@ -333,6 +333,9 @@ def actions_for(action_space: str, *, survey_tool: bool = False, catalogue_v2: b
         actions.update(CATALOGUE_V2_ACTIONS)
     if routing:
         actions.update(ROUTING_ACTIONS)
+        if _PROC_V2:   # C-021: procedures v2 send the agent to TLS Secrets; this reads their certificates (read-only)
+            from . import inspect_tools  # imported here: inspect_tools imports this module
+            actions["inspect_tls_secret"] = (inspect_tools.inspect_tls_secret, ["namespace", "name"])
     if health_sweep or change_diff:
         from . import inspect_tools  # imported here: inspect_tools imports this module
         if health_sweep:

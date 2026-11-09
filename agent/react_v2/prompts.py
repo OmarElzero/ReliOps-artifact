@@ -122,6 +122,8 @@ def routing_text(multi: bool = False) -> str:
 TRIAGE_EVENT_AGE_TEXT = """Events are history, not the current state. Before you count a Warning event as a symptom, compare its age with the
 age of the object it names and with that object's state now: a warning about a pod that is now Running and Ready, or
 one older than the pod, does not explain a current failure.
+If every pod and recent event looks healthy, the fault may be on the way users reach the application: list the Ingresses
+and Services (`kubectl get ingress,services -n <namespace>`) before you choose a category.
 """
 
 
