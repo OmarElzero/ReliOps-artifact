@@ -139,6 +139,7 @@ LOG_OBS = os.environ.get("REACT_V1_LOG_OBS", "off") == "on"
 LOG_OBS_MAX = int(os.environ.get("REACT_V1_LOG_OBS_MAX", "3000"))
 
 JSON_BLOCK_RE = re.compile(r"```json\s*\n(.*?)\n```", re.DOTALL)
+FLAT_ARGS_RESERVED = {"action", "args", "arguments", "parameters", "input", "thought", "thoughts", "reasoning"}
 
 EXIT_OK = 0
 EXIT_INFRA = 1
@@ -253,6 +254,19 @@ def parse_action(content: str) -> dict | None:
         return None
     if not isinstance(obj, dict) or "action" not in obj:
         return None
+    if FEATURES["FLAT_ARGS"]:
+        # The model sometimes writes the arguments next to "action" instead of inside "args". Accept that layout and
+        # the common alternative container names. An explicit args dict wins; flat keys only fill what is missing.
+        args = obj.get("args")
+        args = dict(args) if isinstance(args, dict) else {}
+        for alt in ("arguments", "parameters", "input"):
+            if isinstance(obj.get(alt), dict):
+                for k, v in obj[alt].items():
+                    args.setdefault(k, v)
+        for k, v in obj.items():
+            if k not in FLAT_ARGS_RESERVED:
+                args.setdefault(k, v)
+        obj["args"] = args
     obj.setdefault("args", {})
     return obj
 

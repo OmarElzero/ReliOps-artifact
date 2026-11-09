@@ -30,6 +30,7 @@ SWITCHES = {
     # Round 3 (owner approved 8 Nov 2026, change C-014): workflow change, not a prompt line. Content from kubernetes.io.
     "ROUTING": "R3 - triage, choose a problem category, load its general procedure (knowledge/procedures.md); writes and the diagnosis wait until one is loaded",
     "ROUTE_REVIEW": "R3 - needs ROUTING: before the diagnosis is accepted, check it against the loaded procedure's own conclusion test and the triage symptoms; if it does not hold, load another category",
+    "FLAT_ARGS": "C-019 - accept action arguments written next to \"action\" (or under arguments/parameters/input) instead of only under \"args\"; format tolerance only",
     "ROUTE_MULTI": "R3 - needs ROUTING: load one procedure when the abnormal things are in one place, up to two (never more than three) when they are in unrelated places or nothing looks abnormal",
     # Calibration only (plan 14, step M1): reads nothing, changes nothing, submits at once. A problem this agent passes has a
     # check that passes without a fix.
