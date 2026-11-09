@@ -225,6 +225,11 @@ def render_story(transcript_path: str, cluster_path: str | None = None) -> str:
                 ) else ""
                 valid = "" if res.get("valid", True) else " ✗ invalid action"
                 out.append(f"**Does:** `{res.get('action')}` `{json.dumps(res.get('args', {}))}`{tag}{valid}")
+                if not res.get("args"):
+                    # an action that went out with no arguments: show the exact block the model sent, so a model slip
+                    # can be told apart from a parsing problem
+                    m = JSON_BLOCK_RE.search(call.get("content", "") or "")
+                    out.append("**Raw block sent by the model:** " + (f"`{' '.join(m.group(1).split())[:300]}`" if m else "(none found in the reply)"))
                 if "observation" in res:
                     out.append("**Sees:**\n```\n" + clip(res["observation"]) + "\n```")
             usage = call.get("usage") or {}
