@@ -580,11 +580,11 @@ def main() -> None:
         action_space = "typed"
     actions = actions_for(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
                           health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], routing=FEATURES["ROUTING"])
-    if (FEATURES["ROUTE_REVIEW"] or FEATURES["ROUTE_MULTI"]) and not FEATURES["ROUTING"]:
-        logger.error("REACT_V1_ROUTE_REVIEW and REACT_V1_ROUTE_MULTI need REACT_V1_ROUTING=on")
+    if (FEATURES["ROUTE_REVIEW"] or FEATURES["ROUTE_MULTI"] or FEATURES["PROC_V2"]) and not FEATURES["ROUTING"]:
+        logger.error("REACT_V1_ROUTE_REVIEW, REACT_V1_ROUTE_MULTI and REACT_V1_PROC_V2 need REACT_V1_ROUTING=on")
         sys.exit(EXIT_INFRA)
     if FEATURES["ROUTING"] and not PROCEDURES_FILE.is_file():
-        logger.error("REACT_V1_ROUTING is on but knowledge/procedures.md does not exist")
+        logger.error("REACT_V1_ROUTING is on but %s does not exist", PROCEDURES_FILE)
         sys.exit(EXIT_INFRA)
     knowledge = ""
     if FEATURES["K8S_KNOWLEDGE"]:

@@ -164,7 +164,14 @@ def exec_in_pod(namespace: str, pod: str, command: str, container: str | None = 
 
 # ---- procedures (switch ROUTING) ----
 
-PROCEDURES_FILE = Path(__file__).resolve().parent / "knowledge" / "procedures.md"
+_PROC_V2 = os.environ.get("REACT_V1_PROC_V2", "").strip().lower() == "on"   # same rule as features.FEATURES
+PROCEDURES_FILE = Path(__file__).resolve().parent / "knowledge" / ("procedures_v2.md" if _PROC_V2 else "procedures.md")
+PROC_V2_SCOPE = (
+    "Scope: you loaded this because triage pointed at {cat}. This is a hypothesis, not a finding; it may be wrong.\n"
+    "For now check only {cat}. Follow the steps in order and say which step you are on. Write any other abnormal thing "
+    "you see in one line and leave it for later.\n"
+    "When a step says EXIT, this category is ruled out: say which observation ruled it out and load the next most likely one.\n"
+)
 
 
 def procedures() -> dict[str, str]:
@@ -182,7 +189,11 @@ def procedure_hints() -> list[tuple[str, str]]:
     hints = []
     for cat, body in procedures().items():
         first = next((l for l in body.splitlines() if l.startswith("Points here when:")), "")
-        hints.append((cat, first.removeprefix("Points here when:").strip()))
+        hint = first.removeprefix("Points here when:").strip()
+        not_when = next((l for l in body.splitlines() if l.startswith("Does not point here when:")), "")
+        if not_when:
+            hint += " Not when: " + not_when.removeprefix("Does not point here when:").strip()
+        hints.append((cat, hint))
     return hints
 
 
@@ -203,7 +214,8 @@ def load_procedure(category: str = "") -> ActionResult:
                             "\nCall load_procedure again and set category to the one id from this list that best explains what you saw.", "", 0)
     if key not in procs:
         return ActionResult("", f"unknown category {category!r}; choose one of: {', '.join(procs)}", 2)
-    return ActionResult(f"## procedure: {key}\n{procs[key]}", "", 0)
+    body = (PROC_V2_SCOPE.format(cat=key) + procs[key]) if _PROC_V2 else procs[key]
+    return ActionResult(f"## procedure: {key}\n{body}", "", 0)
 
 
 ROUTING_ACTIONS = {

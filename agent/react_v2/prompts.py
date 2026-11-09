@@ -112,7 +112,17 @@ VERIFY_UNDO_TEXT = """
 def routing_text(multi: bool = False) -> str:
     from .actions import procedure_hints
     cats = "\n".join(f"   - {c}: {h}" for c, h in procedure_hints())
-    return ROUTING_TEXT.format(categories=cats) + (ROUTE_MULTI_TEXT if multi else "")
+    text = ROUTING_TEXT.format(categories=cats)
+    from .actions import _PROC_V2
+    if _PROC_V2:
+        text = text.replace("what still works.\n", "what still works.\n" + TRIAGE_EVENT_AGE_TEXT, 1)
+    return text + (ROUTE_MULTI_TEXT if multi else "")
+
+
+TRIAGE_EVENT_AGE_TEXT = """Events are history, not the current state. Before you count a Warning event as a symptom, compare its age with the
+age of the object it names and with that object's state now: a warning about a pod that is now Running and Ready, or
+one older than the pod, does not explain a current failure.
+"""
 
 
 ROUTE_MULTI_TEXT = """
