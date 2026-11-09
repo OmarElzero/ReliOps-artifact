@@ -215,7 +215,73 @@ def load_procedure(category: str = "") -> ActionResult:
     if key not in procs:
         return ActionResult("", f"unknown category {category!r}; choose one of: {', '.join(procs)}", 2)
     body = (PROC_V2_SCOPE.format(cat=key) + procs[key]) if _PROC_V2 else procs[key]
+    if _REF and _PROC_V2:
+        body += reference_list_text(key)
     return ActionResult(f"## procedure: {key}\n{body}", "", 0)
+
+
+# ---- reference entries (switch REF, C-023; needs ROUTING and PROC_V2) ----
+
+_REF = os.environ.get("REACT_V1_REF", "").strip().lower() == "on"   # same rule as features.FEATURES
+REFERENCE_FILE = Path(__file__).resolve().parent / "knowledge" / "reference.md"
+REFERENCE_FIELDS = ("Signals:", "Not this when:", "Check:", "Evidence to quote:", "Fix family:", "Never:", "Illustration:", "Sources:")
+REF_MAX_LOADS = 3          # entries per run (the driver counts them)
+REF_UNKNOWN_TEXT = ("No reference entry has that id. Continue with the procedure's steps; the entry ids are listed at the end "
+                    "of the loaded procedure.")
+
+
+def references() -> dict[str, str]:
+    """entry id ("<category>/<family>") -> entry text, from the "## " sections of knowledge/reference.md."""
+    if not REFERENCE_FILE.is_file():
+        return {}
+    text = re.sub(r"<!--.*?-->", "", REFERENCE_FILE.read_text(encoding="utf-8"), flags=re.S)
+    out: dict[str, str] = {}
+    for block in re.split(r"^## ", text, flags=re.M)[1:]:
+        head, _, body = block.partition("\n")
+        out[head.strip().lower()] = body.strip()
+    return out
+
+
+def reference_signals(body: str) -> str:
+    line = next((l for l in body.splitlines() if l.startswith("Signals:")), "")
+    return line.removeprefix("Signals:").strip()
+
+
+def reference_list_text(category: str) -> str:
+    """The entry list appended to a loaded procedure: id and Signals line, one per line (empty when there is none)."""
+    entries = [(k, reference_signals(b)) for k, b in references().items() if k.split("/", 1)[0] == category]
+    if not entries:
+        return ""
+    lines = "\n".join(f"- {k}: {sig[:200]}" for k, sig in entries)
+    return (f"\n\nReference entries for {category}. Load one with load_reference only when an observation you already have "
+            f"matches its signals (at most {REF_MAX_LOADS} per run):\n{lines}")
+
+
+def load_reference(entry: str = "") -> ActionResult:
+    """Read-only: one reference entry by id; a category id returns that category's entry list; anything else says that
+    no entry fits (never the nearest one)."""
+    refs = references()
+    key = str(entry or "").strip().lower().strip("`'\" ")
+    if key in refs:
+        return ActionResult(f"## reference: {key}\n{refs[key]}", "", 0)
+    cats = sorted({k.split("/", 1)[0] for k in refs})
+    if key in cats:
+        return ActionResult(f"## reference entries: {key}" + reference_list_text(key), "", 0)
+    return ActionResult(REF_UNKNOWN_TEXT, "", 0)
+
+
+REF_ACTIONS = {
+    "load_reference": (load_reference, ["entry"]),
+}
+
+
+def _reopen_placeholder(step=None, grep: str = "") -> ActionResult:   # the driver answers reopen itself (it holds the outputs)
+    return ActionResult("", "reopen is answered by the driver", 2)
+
+
+FLOW_ACTIONS = {
+    "reopen": (_reopen_placeholder, ["step"]),
+}
 
 
 ROUTING_ACTIONS = {
@@ -324,7 +390,8 @@ WRITE_ACTIONS = {
 
 
 def actions_for(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False,
-                health_sweep: bool = False, change_diff: bool = False, routing: bool = False) -> dict:
+                health_sweep: bool = False, change_diff: bool = False, routing: bool = False,
+                ref: bool = False, flow: bool = False) -> dict:
     """action_space: 'typed' or 'typed+shell'. The keyword switches add actions; all off = the v1 menu."""
     actions = {**TYPED_ACTIONS, **SHELL_ACTIONS} if action_space == "typed+shell" else dict(TYPED_ACTIONS)
     if survey_tool:
@@ -336,12 +403,16 @@ def actions_for(action_space: str, *, survey_tool: bool = False, catalogue_v2: b
         if _PROC_V2:   # C-021: procedures v2 send the agent to TLS Secrets; this reads their certificates (read-only)
             from . import inspect_tools  # imported here: inspect_tools imports this module
             actions["inspect_tls_secret"] = (inspect_tools.inspect_tls_secret, ["namespace", "name"])
+            if ref:    # C-023: reference entries hang off the v2 procedures
+                actions.update(REF_ACTIONS)
     if health_sweep or change_diff:
         from . import inspect_tools  # imported here: inspect_tools imports this module
         if health_sweep:
             actions["health_sweep"] = (inspect_tools.health_sweep, ["namespace"])
         if change_diff:
             actions["recent_changes"] = (inspect_tools.recent_changes, ["namespace"])
+    if flow:
+        actions.update(FLOW_ACTIONS)
     return actions
 
 

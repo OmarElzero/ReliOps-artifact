@@ -33,6 +33,10 @@ SWITCHES = {
     "FLAT_ARGS": "C-019 - accept action arguments written next to \"action\" (or under arguments/parameters/input) instead of only under \"args\"; format tolerance only",
     "PROC_V2": "C-020 - needs ROUTING: load knowledge/procedures_v2.md (rule-out step 0, IF branches, EXIT, known noise, ready commands) with a scope header, and add an event-age rule to triage",
     "ROUTE_MULTI": "R3 - needs ROUTING: load one procedure when the abnormal things are in one place, up to two (never more than three) when they are in unrelated places or nothing looks abnormal",
+    # Plan 18 (owner approved 9 Nov 2026): knowledge, reasoning examples and context flow, each its own switch.
+    "REF": "C-023 - needs ROUTING and PROC_V2: read action load_reference; a loaded procedure lists its reference entries (knowledge/reference.md); at most 3 entries per run",
+    "EXCAP": "C-024 - three fixed capability examples in the prompt (start-up noise vs fault, EXIT with a rule-out, evidence before a write)",
+    "FLOW": "C-025 - per-tool output caps with the full text kept by step, older observations shown as one-line digests (read action reopen), the loaded procedure pinned, mitigation starts from a hand-off; context sizes logged",
     # Calibration only (plan 14, step M1): reads nothing, changes nothing, submits at once. A problem this agent passes has a
     # check that passes without a fix.
     "NULL_AGENT": "M1 - do-nothing agent: no model call, submits a fixed non-diagnosis and an empty fix",

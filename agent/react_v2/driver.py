@@ -42,11 +42,13 @@ from clients.mini_sre.backends import ApiBackend  # noqa: E402
 
 from . import features  # noqa: E402
 from . import inspect_tools  # noqa: E402
+from . import actions as actions_mod  # noqa: E402
 from .actions import OPTIONAL_ARGS, PROCEDURES_FILE, WRITE_ACTIONS, actions_for, before_conclude  # noqa: E402
 from .pricing import cost_usd, price_note  # noqa: E402
 from .prompts import (  # noqa: E402
     ACTION_OBSERVATION_TEMPLATE,
     EMPTY_DIAGNOSIS_TEXT,
+    FLOW_HANDOFF_TEXT,
     FORMAT_ERROR_TEXT,
     ROUTE_REVIEW_TEXT,
     ROUTING_GATE_TEXT,
@@ -73,6 +75,22 @@ _writes_total = 0  # valid write actions so far in this run (both stages); the s
 _procedures_loaded: list[str] = []  # ROUTING: categories loaded so far in this run (both stages)
 ROUTING_GATED = WRITE_ACTIONS - {"exec_kubectl_guarded", "exec_in_pod"}  # these two also serve reads, so triage may use them
 ROUTING_GATE_MAX = 2  # refusals per stage before the gate lets the action through, so a stuck model cannot stall
+
+# FLOW (C-025): the full text of every observation is kept by step; the model sees the last FLOW_KEEP in full, older ones
+# as one-line digests, and can ask for any of them again with the read action reopen.
+FLOW_KEEP = int(os.environ.get("REACT_V1_FLOW_KEEP", "3"))
+FLOW_CAPS = {"get_pod_status": 60, "get_events": 30, "get_logs": 80, "describe": 80, "get_resource": 120,
+             "exec_kubectl_guarded": 80, "exec_in_pod": 60, "survey": 80, "health_sweep": 40, "recent_changes": 40}
+FLOW_DEFAULT_CAP = 80
+FLOW_REOPEN_LINES = 80
+FLOW_UNCAPPED = {"load_procedure", "load_reference", "reopen", "inspect_tls_secret"}
+_ERROR_WORDS = re.compile(r"error|fail|fatal|exception|refused|denied|forbidden|timeout|timed out|invalid|warn|backoff|unhealthy|expired|x509|oom|killed|not found|panic", re.I)
+_flow_raw: dict[int, str] = {}      # step -> full observation body (before caps)
+_flow_digest: dict[int, str] = {}   # step -> one-line digest
+_flow_step = 0
+_diagnosis_text = ""                # the accepted diagnosis, for the mitigation hand-off
+_ref_loads: list[str] = []          # REF: entries loaded so far in this run
+_PLACEHOLDER_RE = re.compile(r"<(namespace|pod|name|service|deployment|secret|ingress|node|claim|configmap|container|port|address|time)[^<>]*>", re.I)
 
 API_HOSTNAME = os.getenv("API_HOSTNAME", "localhost")
 API_PORT = os.getenv("API_PORT", "8000")
@@ -212,15 +230,157 @@ class Transcript:
 @dataclass
 class Session:
     messages: list[dict] = field(default_factory=list)
+    tags: list = field(default_factory=list)   # FLOW: per message, None or {"kind": "obs", "step", "digest", "pinned"}
 
     def open(self, system: dict, first_turn: str) -> None:
         self.messages = [system, {"role": "user", "content": first_turn}]
+        self.tags = [None, None]
 
-    def add_user(self, text: str) -> None:
+    def add_user(self, text: str, tag: dict | None = None) -> None:
         self.messages.append({"role": "user", "content": text})
+        self.tags.append(tag)
 
     def add_assistant(self, reply) -> None:
         self.messages.append(reply.as_message(pass_reasoning=True))
+        self.tags.append(None)
+
+
+def _tag(session: Session, i: int):
+    return session.tags[i] if i < len(session.tags) else None
+
+
+def flow_view(session: Session) -> list[dict]:
+    """FLOW: what the model is sent. Observations older than the last FLOW_KEEP become their one-line digest, except the
+    procedure loaded last, which stays in full. Replies and driver messages are kept. session.messages is not changed."""
+    obs = [i for i in range(len(session.messages)) if (_tag(session, i) or {}).get("kind") == "obs"]
+    keep = set(obs[-FLOW_KEEP:]) if FLOW_KEEP > 0 else set()
+    pins = [i for i in obs if _tag(session, i).get("pinned")]
+    if pins:
+        keep.add(pins[-1])
+    return [{**m, "content": _tag(session, i)["digest"]} if i in obs and i not in keep else m
+            for i, m in enumerate(session.messages)]
+
+
+def context_sizes(session: Session, sent: list[dict]) -> dict:
+    """FLOW logging: characters by part of what was sent (fixed prefix, full observations, digests, replies, other)."""
+    sizes = {"fixed": 0, "obs_full": 0, "digests": 0, "replies": 0, "other": 0}
+    for i, m in enumerate(sent):
+        n = len(str(m.get("content") or ""))
+        t = _tag(session, i) or {}
+        if i < 2:
+            sizes["fixed"] += n
+        elif t.get("kind") == "obs":
+            sizes["digests" if m.get("content") == t.get("digest") and str(session.messages[i].get("content")) != t.get("digest") else "obs_full"] += n
+        elif m.get("role") == "assistant":
+            sizes["replies"] += n
+        else:
+            sizes["other"] += n
+    sizes["total"] = sum(sizes.values())
+    return sizes
+
+
+def _arg_summary(args: dict) -> str:
+    shown = {k: v for k, v in (args or {}).items() if k != "namespace"}
+    text = json.dumps(shown, ensure_ascii=False) if shown else ""
+    return text if len(text) <= 100 else text[:97] + "..."
+
+
+def flow_digest(step: int, action: str, args: dict, body: str) -> str:
+    lines = body.splitlines()
+    errs = sum(1 for l in lines if _ERROR_WORDS.search(l))
+    return (f"[S{step}] {action} {_arg_summary(args)}: {len(lines)} lines, {errs} with error or warning words. "
+            f"reopen(step={step}) shows it again.").replace("  ", " ")
+
+
+def _strip_noise(body: str) -> str:
+    """get_resource: drop managedFields and the last-applied annotation (bookkeeping, often longer than the object)."""
+    out, skip = [], None
+    for line in body.splitlines():
+        indent = len(line) - len(line.lstrip())
+        if skip is not None:
+            if line.strip() and (indent < skip or (indent == skip and not line.lstrip().startswith("- "))):
+                skip = None
+            else:
+                continue
+        if line.strip().startswith("managedFields:"):
+            skip = indent
+            continue
+        if "kubectl.kubernetes.io/last-applied-configuration" in line:
+            skip = indent
+            continue
+        out.append(line)
+    return "\n".join(out)
+
+
+def flow_cap(action: str, body: str, step: int, args: dict | None = None) -> str:
+    """FLOW: per-tool line cap. Events keep the newest lines (kubectl sorts oldest first); logs keep error lines and the
+    newest lines; others keep the first lines. A note says what was cut and how to see it."""
+    if action == "get_resource":
+        body = _strip_noise(body)
+    lines = body.splitlines()
+    cap = FLOW_CAPS.get(action, FLOW_DEFAULT_CAP)
+    if len(lines) <= cap:
+        return body
+    is_log = action == "get_logs" or (action == "exec_kubectl_guarded" and "kubectl logs" in str((args or {}).get("cmd", "")))
+    if action == "get_events":
+        kept = lines[:1] + lines[-(cap - 1):]
+    elif is_log:
+        tail = set(range(len(lines) - cap // 2, len(lines)))
+        errs = [i for i in range(len(lines)) if i not in tail and _ERROR_WORDS.search(lines[i])][-(cap - cap // 2):]
+        kept = [lines[i] for i in sorted(set(errs) | tail)]
+    else:
+        kept = lines[:cap]
+    return "\n".join(kept) + (f"\n[cut: showing {len(kept)} of {len(lines)} lines. reopen(step={step}, grep=<text>) shows the "
+                               f"lines that contain a text.]")
+
+
+def flow_reopen(args: dict) -> str:
+    raw_step = str((args or {}).get("step", "")).strip().upper().lstrip("S")
+    try:
+        step = int(raw_step)
+    except ValueError:
+        return ACTION_OBSERVATION_TEMPLATE.format(code=2, body=f"reopen needs step=<number>; known steps: 1 to {_flow_step - 1}")
+    body = _flow_raw.get(step)
+    if body is None:
+        return ACTION_OBSERVATION_TEMPLATE.format(code=2, body=f"no stored output for step {step} (procedures and reference entries are not stored; load them again)")
+    lines = body.splitlines()
+    grep = str((args or {}).get("grep") or "").strip()
+    if grep:
+        hits = [f"{i + 1}: {l}" for i, l in enumerate(lines) if grep.lower() in l.lower()]
+        text = "\n".join(hits[:FLOW_REOPEN_LINES]) or f"no line of step {step} contains {grep!r}"
+        if len(hits) > FLOW_REOPEN_LINES:
+            text += f"\n[{len(hits) - FLOW_REOPEN_LINES} more lines contain it; use a longer text]"
+    else:
+        text = "\n".join(lines[:FLOW_REOPEN_LINES])
+        if len(lines) > FLOW_REOPEN_LINES:
+            text += f"\n[showing the first {FLOW_REOPEN_LINES} of {len(lines)} lines; add grep=<text> to find the rest]"
+    return ACTION_OBSERVATION_TEMPLATE.format(code=0, body=f"(full text of step {step})\n{text}"[:8000])
+
+
+def flow_handoff(session: Session) -> None:
+    """FLOW: the mitigation stage starts from the fixed prompt plus a hand-off, not the whole diagnosis trail."""
+    procs = list(dict.fromkeys(_procedures_loaded))
+    fix = ""
+    if procs:
+        body = actions_mod.procedures().get(procs[-1], "")
+        fix = next((l for l in body.splitlines() if l.startswith("Fix families:")), "")
+    digests = "\n".join(_flow_digest[k] for k in sorted(_flow_digest)) or "(none)"
+    text = FLOW_HANDOFF_TEXT.format(diagnosis=_diagnosis_text or "(not recorded)",
+                                    procedures=(", ".join(procs) or "none") + (f"\n{fix}" if fix else ""), digests=digests)
+    session.messages = session.messages[:2] + [{"role": "user", "content": text}]
+    session.tags = [None, None, None]
+
+
+def ref_shadow_rank(recent: list[str], top: int = 3) -> list[str]:
+    """REF: a keyword match of recent observations against each entry's Signals line. Logged only, never shown."""
+    text = " ".join(recent).lower()
+    scored = []
+    for key, body in actions_mod.references().items():
+        words = {w for w in re.findall(r"[a-z][a-z0-9]{3,}", actions_mod.reference_signals(body).lower())}
+        hits = sum(1 for w in words if w in text)
+        if hits:
+            scored.append((hits, key))
+    return [k for _, k in sorted(scored, key=lambda x: (-x[0], x[1]))[:top]]
 
 
 @dataclass
@@ -271,7 +431,7 @@ def parse_action(content: str) -> dict | None:
     return obj
 
 
-def dispatch_action(action_name: str, args: dict, namespace: str, actions: dict) -> tuple[str, bool]:
+def dispatch_action(action_name: str, args: dict, namespace: str, actions: dict, flow_step: int | None = None) -> tuple[str, bool]:
     """Returns (observation_text, is_valid_action)."""
     args = dict(args)
     args.setdefault("namespace", namespace)
@@ -297,8 +457,13 @@ def dispatch_action(action_name: str, args: dict, namespace: str, actions: dict)
     except TypeError as e:
         return f"Bad arguments for {action_name!r}: {e}", False
     body = result.stdout + (("\n" + result.stderr) if result.stderr else "")
+    flow = FEATURES["FLOW"] and flow_step is not None
+    if flow:
+        _flow_raw[flow_step] = body
     if FEATURES["OUTPUT_TRIM"]:
         body = inspect_tools.trim_output(body)
+    if flow and action_name not in FLOW_UNCAPPED:
+        body = flow_cap(action_name, body, flow_step, args)
     return ACTION_OBSERVATION_TEMPLATE.format(code=result.exit_code, body=body[:8000]), True
 
 
@@ -313,7 +478,7 @@ def run_stage(
     run_ends: float,
     call_offset: int = 0,
 ) -> StageOutcome:
-    global _writes_total
+    global _writes_total, _flow_step, _diagnosis_text
     started = time.monotonic()
     usage_records: list[dict] = []
     model_calls = 0
@@ -372,7 +537,8 @@ def run_stage(
             wrap_up_calls += 1
 
         model_calls += 1
-        reply = backend.complete(as_notes(session.messages) if note_mode else session.messages,
+        sent = flow_view(session) if FEATURES["FLOW"] else session.messages
+        reply = backend.complete(as_notes(sent) if note_mode else sent,
                                  step_dir=Path(AGENT_LOGS_DIR) / "steps" / f"{stage}_{call_offset + model_calls:02d}")
         usage_records.append(reply.usage)
         transcript.write(
@@ -384,6 +550,7 @@ def run_stage(
                 "usage": reply.usage,
                 "error": reply.error,
                 **({"blank_recovery": True} if note_mode else {}),
+                **({"context": context_sizes(session, sent)} if FEATURES["FLOW"] else {}),
             }
         )
         if reply.error:
@@ -493,6 +660,8 @@ def run_stage(
                 accepted = False
                 logger.warning(f"submit failed: {e}")
             transcript.write({"type": "submit", "stage": stage, "solution": solution, "accepted": accepted})
+            if accepted and stage == "diagnosis":
+                _diagnosis_text = str(solution or "")
             if accepted:
                 # Always close the turn with a user-role message before returning: some providers
                 # (seen with gemini/* via Vertex) reject the next stage's first request if the
@@ -513,7 +682,30 @@ def run_stage(
                     if snap is not None:
                         undo_snaps[key] = snap
                         feature_event("VERIFY_UNDO", "recorded", kind=kind, object=name, absent=snap.get("absent", False))
-        obs, valid = dispatch_action(action_name, args, namespace, actions)
+        step_n = None
+        if FEATURES["FLOW"]:
+            _flow_step += 1
+            step_n = _flow_step
+        if (FEATURES["REF"] or FEATURES["EXCAP"]) and _PLACEHOLDER_RE.search(json.dumps(args, ensure_ascii=False)):
+            feature_event("REF" if FEATURES["REF"] else "EXCAP", "placeholder_in_action", action=action_name)
+        if FEATURES["FLOW"] and action_name == "reopen":
+            obs, valid = flow_reopen(args), True
+            feature_event("FLOW", "reopen", step=str(args.get("step", "")), grep=bool(args.get("grep")))
+        elif FEATURES["REF"] and action_name == "load_reference" and action_name in actions \
+                and str(args.get("entry") or "").strip().lower() in actions_mod.references() \
+                and len(_ref_loads) >= actions_mod.REF_MAX_LOADS:
+            obs, valid = ACTION_OBSERVATION_TEMPLATE.format(
+                code=0, body=f"You have loaded {actions_mod.REF_MAX_LOADS} reference entries; that is the limit. Continue with the evidence you have."), True
+            feature_event("REF", "limit", entry=str(args.get("entry")))
+        else:
+            obs, valid = dispatch_action(action_name, args, namespace, actions, flow_step=step_n)
+        if FEATURES["REF"] and action_name == "load_reference" and valid:
+            entry = str(args.get("entry") or "").strip().lower()
+            path = "entry" if "## reference: " in obs else ("menu" if "## reference entries" in obs else ("limit" if "the limit" in obs else "unknown"))
+            if path == "entry":
+                _ref_loads.append(entry)
+            recent = [str(m.get("content") or "") for m in session.messages[-6:] if m.get("role") == "user"]
+            feature_event("REF", "load", path=path, entry=entry, order=len(_ref_loads), shadow_top3=ref_shadow_rank(recent))
         if valid:
             used += 1
             if action_name == "load_procedure" and obs.startswith("<exit_code>0<") and "## procedure: " in obs:
@@ -535,7 +727,16 @@ def run_stage(
                 f"\n\n[budget: {used}/{HARD_CAP} actions used this stage, "
                 f"~{seconds_left_now}s left before you must submit]"
             )
-        session.add_user(obs)
+        if FEATURES["FLOW"]:
+            pinned = action_name == "load_procedure" and valid and "## procedure: " in obs
+            digest = flow_digest(step_n, action_name, args, _flow_raw.get(step_n, obs))
+            if action_name in ("load_procedure", "load_reference"):
+                digest = f"[S{step_n}] {action_name} {_arg_summary(args)}: loaded earlier; call it again to read it."
+            if action_name != "reopen":
+                _flow_digest[step_n] = digest
+            session.add_user(f"[S{step_n}]\n" + obs, {"kind": "obs", "step": step_n, "digest": digest, "pinned": pinned})
+        else:
+            session.add_user(obs)
 
         status = conductor_status()
         run_ends = run_deadline(status) or run_ends
@@ -579,7 +780,17 @@ def main() -> None:
         logger.warning(f"unknown REACT_V1_ACTION_SPACE {action_space!r}; defaulting to 'typed'")
         action_space = "typed"
     actions = actions_for(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
-                          health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], routing=FEATURES["ROUTING"])
+                          health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], routing=FEATURES["ROUTING"],
+                          ref=FEATURES["REF"], flow=FEATURES["FLOW"])
+    if FEATURES["REF"] and not (FEATURES["ROUTING"] and FEATURES["PROC_V2"]):
+        logger.error("REACT_V1_REF needs REACT_V1_ROUTING=on and REACT_V1_PROC_V2=on")
+        sys.exit(EXIT_INFRA)
+    if FEATURES["REF"] and not actions_mod.references():
+        logger.error("REACT_V1_REF is on but %s is missing or empty", actions_mod.REFERENCE_FILE)
+        sys.exit(EXIT_INFRA)
+    if FEATURES["EXCAP"] and not FEATURES["ROUTING"]:
+        logger.error("REACT_V1_EXCAP needs REACT_V1_ROUTING=on (its examples use load_procedure)")
+        sys.exit(EXIT_INFRA)
     if (FEATURES["ROUTE_REVIEW"] or FEATURES["ROUTE_MULTI"] or FEATURES["PROC_V2"]) and not FEATURES["ROUTING"]:
         logger.error("REACT_V1_ROUTE_REVIEW, REACT_V1_ROUTE_MULTI and REACT_V1_PROC_V2 need REACT_V1_ROUTING=on")
         sys.exit(EXIT_INFRA)
@@ -625,10 +836,11 @@ def main() -> None:
         {"role": "system", "content": system_text(action_space, survey_tool=FEATURES["SURVEY"], catalogue_v2=FEATURES["CATALOGUE_V2"],
                                                      optional_args=FEATURES["OPTIONAL_ARGS"], knowledge=knowledge,
                                                      health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"],
-                                                     routing=FEATURES["ROUTING"])},
+                                                     routing=FEATURES["ROUTING"], ref=FEATURES["REF"], flow=FEATURES["FLOW"])},
         instance_text(app_info, fault_exists=FEATURES["FAULT_EXISTS"], survey_first=FEATURES["SURVEY"], ledger=FEATURES["LEDGER"],
                       health_sweep=FEATURES["HEALTH_SWEEP"], change_diff=FEATURES["CHANGE_DIFF"], verify_undo=FEATURES["VERIFY_UNDO"],
-                      routing=FEATURES["ROUTING"], route_multi=FEATURES["ROUTE_MULTI"]),
+                      routing=FEATURES["ROUTING"], route_multi=FEATURES["ROUTE_MULTI"], ref=FEATURES["REF"],
+                      excap=FEATURES["EXCAP"], flow=FEATURES["FLOW"]),
     )
     transcript.write({"type": "meta", **meta, "conductor_url": CONDUCTOR_URL})
 
@@ -665,6 +877,10 @@ def main() -> None:
             stage = None
 
     if stage == "mitigation":
+        if FEATURES["FLOW"] and "diagnosis" in submitted_stages:
+            flow_handoff(session)
+            transcript.write({"type": "feature", "name": "FLOW", "stage": "mitigation", "event": "handoff",
+                              "digests": len(_flow_digest), "chars": len(session.messages[-1]["content"])})
         run_ends = run_deadline(conductor_status()) or run_ends
         record(
             run_stage(

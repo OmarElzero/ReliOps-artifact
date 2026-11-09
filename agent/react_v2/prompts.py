@@ -35,14 +35,20 @@ exec_kubectl_guarded only for what no typed action covers."""
 
 def _action_list_text(action_space: str, *, survey_tool: bool = False, catalogue_v2: bool = False,
                       optional_args: bool = False, health_sweep: bool = False, change_diff: bool = False,
-                      routing: bool = False) -> str:
+                      routing: bool = False, ref: bool = False, flow: bool = False) -> str:
     lines = []
     for name, (_, arg_names) in actions_for(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2,
-                                            health_sweep=health_sweep, change_diff=change_diff, routing=routing).items():
+                                            health_sweep=health_sweep, change_diff=change_diff, routing=routing,
+                                            ref=ref, flow=flow).items():
         kind = "write" if name in WRITE_ACTIONS else "read"
         shown = list(arg_names)
         if name == "load_procedure":
             shown = ["category=<one id from the category list>"]   # a placeholder, never a real id (no bias towards one category)
+        if name == "load_reference":
+            shown = ["entry=<one id from the list at the end of the loaded procedure>"]
+        if name == "reopen":
+            lines.append("- reopen(step=<the S number of an earlier observation>, [grep=<text>])  [read]")
+            continue
         if optional_args:
             shown += [f"[{a}]" for a in OPTIONAL_ARGS.get(name, [])]
         lines.append(f"- {name}({', '.join(shown)})  [{kind}]")
@@ -51,11 +57,11 @@ def _action_list_text(action_space: str, *, survey_tool: bool = False, catalogue
 
 def system_text(action_space: str = "typed", *, survey_tool: bool = False, catalogue_v2: bool = False,
                 optional_args: bool = False, knowledge: str = "", health_sweep: bool = False, change_diff: bool = False,
-                routing: bool = False) -> str:
+                routing: bool = False, ref: bool = False, flow: bool = False) -> str:
     shell_note = SHELL_NOTE if action_space == "typed+shell" else " You cannot run arbitrary shell commands — only these typed actions exist."
     text = SYSTEM_TEMPLATE.format(
         action_list=_action_list_text(action_space, survey_tool=survey_tool, catalogue_v2=catalogue_v2, optional_args=optional_args,
-                                      health_sweep=health_sweep, change_diff=change_diff, routing=routing),
+                                      health_sweep=health_sweep, change_diff=change_diff, routing=routing, ref=ref, flow=flow),
         shell_note=shell_note)
     if optional_args:
         text += "\n\nArguments in [brackets] are optional."
@@ -167,13 +173,15 @@ Write actions and the diagnosis submission are refused until you have loaded at 
 
 def instance_text(app_info: dict, *, fault_exists: bool = False, survey_first: bool = False, ledger: bool = False,
                   health_sweep: bool = False, change_diff: bool = False, verify_undo: bool = False,
-                  routing: bool = False, route_multi: bool = False) -> str:
+                  routing: bool = False, route_multi: bool = False, ref: bool = False, excap: bool = False,
+                  flow: bool = False) -> str:
     app_name = app_info.get("app_name", "unknown")
     namespace = app_info.get("namespace", "default")
     descriptions = app_info.get("descriptions", "")
     extra = (FAULT_EXISTS_TEXT if fault_exists else "") + (SURVEY_TEXT if survey_first else "") + (LEDGER_TEXT if ledger else "") \
         + (HEALTH_SWEEP_TEXT if health_sweep else "") + (CHANGE_DIFF_TEXT if change_diff else "") + (VERIFY_UNDO_TEXT if verify_undo else "") \
-        + (routing_text(route_multi) if routing else "")
+        + (routing_text(route_multi) if routing else "") + (REF_TEXT if ref else "") + (FLOW_TEXT if flow else "") \
+        + (EXCAP_TEXT if excap else "")
     return f"""You are diagnosing and fixing an issue in the '{app_name}' application, namespace '{namespace}'.
 
 {descriptions}
@@ -186,6 +194,62 @@ TASK 2 (mitigation): apply a fix using the available write actions, then submit 
 CRITICAL: you are fully autonomous. Do not ask for confirmation; act on your best analysis.
 {WORKFLOW_TEXT}{extra}"""
 
+
+REF_TEXT = """
+
+Reference entries: a loaded procedure ends with a list of reference entries for its category, each with the signals that
+point to it. When an observation you already have matches an entry's signals, load_reference with that entry id: it gives
+the checks, the line to quote as evidence and the safe fixes. Do not load an entry on a guess; at most three per run."""
+
+FLOW_TEXT = """
+
+How observations are shown: each observation starts with its number [S<n>]. Only the last three are shown in full;
+earlier ones are shortened to one line, and the procedure you loaded last stays in full. Long outputs are cut and the
+note at the end says how much was cut. reopen(step=<n>) shows an earlier observation again; add grep=<text> to see only
+the lines that contain that text."""
+
+# C-024 EXCAP: three examples of moves, not of faults. Placeholders only; no category name, no fault named; the output
+# shapes follow kubectl's own formats. Each example is in the agent's real action format.
+EXCAP_TEXT = """
+
+## Three examples of how to reason (the situations are made up; copy the reasoning, not the names)
+
+Example 1 - an old error is not the fault.
+Observation (excerpt of a log): "<time 10:00:01> dial tcp <address>: connect: connection refused" then
+"<time 10:00:03> listening on :<port>". The container started at 10:00:00.
+THOUGHT: "connection refused" (step 4) came one second after the start and is followed by "listening": that is start-up
+noise, not the current fault. I note it in one line. To see whether any error still happens, I read only recent lines.
+```json
+{"action": "exec_kubectl_guarded", "args": {"cmd": "kubectl logs <pod> -n <namespace> --since=5m"}}
+```
+
+Example 2 - a clean check rules a category out.
+Observation: step 0 of the loaded procedure lists every node as Ready, with no pressure condition True and no taint
+that the pods do not tolerate.
+THOUGHT: the procedure's rule-out step is clean, so this category is ruled out by step 7: "all nodes Ready, no
+pressure, no blocking taint". I load the next most likely category instead of looking for a problem here.
+```json
+{"action": "load_procedure", "args": {"category": "<next most likely category>"}}
+```
+
+Example 3 - change only the object the evidence names.
+Observation: the error quoted in step 9 names Service <service-a>; I was about to change Deployment <deployment-b>.
+THOUGHT: my evidence (step 9) points at <service-a>, not at <deployment-b>. Changing <deployment-b> would not be
+supported by anything I saw. I read <service-a> first and change only what that reading shows is wrong.
+```json
+{"action": "get_resource", "args": {"namespace": "<namespace>", "kind": "service", "name": "<service-a>"}}
+```"""
+
+FLOW_HANDOFF_TEXT = """The diagnosis stage is over and your diagnosis was accepted:
+{diagnosis}
+
+Procedures you loaded: {procedures}
+
+Your earlier observations, one line each (reopen(step=<n>) shows any of them again in full):
+{digests}
+
+Now TASK 2 (mitigation): apply a fix for the diagnosed cause using the write actions, check that it worked, then submit an
+empty string ("solution": "") to trigger validation. Change only objects your evidence names."""
 
 ACTION_OBSERVATION_TEMPLATE = "<exit_code>{code}</exit_code>\n<output>\n{body}\n</output>"
 
