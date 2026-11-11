@@ -1,0 +1,2 @@
+item_id,problem_id,expected_from_card,diagnosis_text,d1_localization,d2_characterization,d3_scope,overall_correct,confidence,reason,labeler
+I000,(example) expired_tls_hotel_reservation,"D1: Ingress frontend-ingress and secret hotel-frontend-tls. D2: the secret holds an expired certificate. D3: do not blame pods, network or service.","(example) The frontend-ingress presents the certificate from hotel-frontend-tls, whose notAfter date has passed, so HTTPS handshakes fail. Pods are healthy.",Y,Y,Y,Y,3,Names the secret and the expiry; no wrong blame.,Omar
