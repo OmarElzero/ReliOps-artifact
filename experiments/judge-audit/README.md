@@ -22,7 +22,11 @@ estimate, so report it with the count). The 45 single-labeled runs add judge-ver
 most of the weight because the claim "procedures may help diagnosis" depends on the judge; the round-2 "no effect"
 result cannot be inflated by a lenient judge.
 
-## Steps
+## Two ways to run it
+
+The **Judge audit tab in the Lab** is the main route: the owner draws the sample on the final exports, each labeler opens the tab, picks their name and answers their own items, and the owner reads the score there (see the Lab's `docs/GUIDE.md`, "Assigned audit"). The draw, the blind rules and the scoring are the same as in `judge_audit.py`. The CSV script below is the fallback if a machine cannot use the tab.
+
+## Steps (CSV fallback)
 
 1. After the final exports, the coordinator runs `python3 judge_audit.py draw --r3 <R3 runs.csv> --r2 <R2 runs.csv> --labelers A,B,C --out out/`.
 2. Each labeler gets only `out/sheet_<name>.csv`. The sheet shows the problem, the card's "what a correct diagnosis must say", and the agent's diagnosis. It never shows the configuration, the judge's verdict, the judge's reasoning or any other labeler's answers.
