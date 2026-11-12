@@ -1,0 +1,362 @@
+[
+ {
+  "item": "H01",
+  "run_id": "4072d9db-fa30-459f-9108-993a4d3f4371",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H02",
+  "run_id": "239e695d-5f94-42d3-b70f-a551a268f312",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "expired_tls_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H03",
+  "run_id": "14028d09-4dc1-4fe5-b35b-1d60572fac75",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "wrong_dns_policy_hotel_reservation",
+  "first_judge": true,
+  "gpt54": true,
+  "kind": "agree"
+ },
+ {
+  "item": "H04",
+  "run_id": "f4eb5c86-ffe4-4226-b6ad-531643a26134",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "liveness_probe_too_aggressive_hotel_reservation",
+  "first_judge": false,
+  "gpt54": true,
+  "kind": "disagree"
+ },
+ {
+  "item": "H05",
+  "run_id": "69b8e517-3c5d-4db8-b19d-30b7fbd23265",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "feature_flag_latent_bug_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H06",
+  "run_id": "0866c884-e21a-4acd-b09a-f9954e3aebf6",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H07",
+  "run_id": "7c8af153-0c6f-42ea-a715-963ffd9805ed",
+  "config": "R3 B2 +FLAT",
+  "problem": "persistent_volume_affinity_violation",
+  "first_judge": true,
+  "gpt54": true,
+  "kind": "agree"
+ },
+ {
+  "item": "H08",
+  "run_id": "0448a839-9a98-4dd6-822a-31ea5e844088",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H09",
+  "run_id": "bfffae1c-c4ac-4ea8-aca5-cd5fe2ec63d3",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": false,
+  "gpt54": false,
+  "kind": "agree"
+ },
+ {
+  "item": "H10",
+  "run_id": "e819ff08-43e5-461f-b9d2-552f7077ede4",
+  "config": "R3 B2 +FLAT",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H11",
+  "run_id": "bc0361b2-9eee-4490-ae99-dc73426c2946",
+  "config": "R3 B2 +FLAT",
+  "problem": "service_port_conflict_social_network",
+  "first_judge": true,
+  "gpt54": true,
+  "kind": "agree"
+ },
+ {
+  "item": "H12",
+  "run_id": "5701bdb0-91f0-4303-944b-e64c17fa6ef3",
+  "config": "R3 B2 +ROUTING +FLAT",
+  "problem": "liveness_probe_too_aggressive_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H13",
+  "run_id": "ce17fe55-4226-4591-9da4-26a646992735",
+  "config": "R3 B2 +FLAT",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H14",
+  "run_id": "eccfcb05-0676-4ac3-a1b5-ccb037a80f26",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H15",
+  "run_id": "38bbcf70-ac65-40f0-9abc-b8f92ccf9385",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H16",
+  "run_id": "828e2834-9c6d-40d3-b20c-fe543a430005",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "persistent_volume_affinity_violation",
+  "first_judge": true,
+  "gpt54": true,
+  "kind": "agree"
+ },
+ {
+  "item": "H17",
+  "run_id": "1d3a0bc4-6bb4-4b6c-ac22-c4548d057b84",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "silent_data_corruption",
+  "first_judge": true,
+  "gpt54": true,
+  "kind": "agree"
+ },
+ {
+  "item": "H18",
+  "run_id": "1e097920-6cdd-43d2-9723-8cfd60dbb125",
+  "config": "R3 B2 +FLAT",
+  "problem": "liveness_probe_too_aggressive_hotel_reservation",
+  "first_judge": false,
+  "gpt54": false,
+  "kind": "agree"
+ },
+ {
+  "item": "H19",
+  "run_id": "615ff87b-9932-47be-b446-1239885feeba",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "service_port_conflict_social_network",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H20",
+  "run_id": "76788368-aaf7-4996-8bce-6c68c3d571cd",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "service_port_conflict_social_network",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H21",
+  "run_id": "5c0651da-d38b-4063-a333-29f8962ef942",
+  "config": "R3 B2 +ROUTING +FLAT",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H22",
+  "run_id": "a33464ae-9f9a-432f-8204-d3f7900bbbf1",
+  "config": "R3 B2 +FLAT",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H23",
+  "run_id": "8dab6ca0-2956-4e55-8f81-f18c6b69ab07",
+  "config": "R3 B2 +ROUTING +FLAT",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H24",
+  "run_id": "afa9ddad-3781-4795-b86a-013a69543ad7",
+  "config": "R3 B2 +ROUTING +FLAT",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H25",
+  "run_id": "bf12daf9-f934-4d5d-923b-e141e671027b",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H26",
+  "run_id": "71d87835-0d8d-4c57-97d2-e123f8c2aaad",
+  "config": "R3 B2 +ROUTING +FLAT",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H27",
+  "run_id": "de091344-e305-4882-90ac-0598084a4823",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "expired_tls_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H28",
+  "run_id": "581fb0a9-fa72-4b6f-993c-c869b3355ec6",
+  "config": "R3 B2 +FLAT",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H29",
+  "run_id": "324875e7-99ae-43e8-98a0-af92cc2936d8",
+  "config": "R3 B2 +FLAT",
+  "problem": "ingress_misroute",
+  "first_judge": false,
+  "gpt54": false,
+  "kind": "agree"
+ },
+ {
+  "item": "H30",
+  "run_id": "a2596747-1959-4c11-8e08-54d4a3b3db1a",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "liveness_probe_too_aggressive_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H31",
+  "run_id": "24e73099-ad96-448a-beaf-53dca5922c30",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "psa_restricted_blocks_recreation_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H32",
+  "run_id": "70339bec-b3b4-4430-965d-27409187ec6e",
+  "config": "R3 B2 +FLAT",
+  "problem": "silent_data_corruption",
+  "first_judge": true,
+  "gpt54": true,
+  "kind": "agree"
+ },
+ {
+  "item": "H33",
+  "run_id": "fadf862c-16ac-44ba-b203-b9d3afbb7acb",
+  "config": "R3 B2 +ROUTING +FLAT",
+  "problem": "wrong_dns_policy_hotel_reservation",
+  "first_judge": false,
+  "gpt54": false,
+  "kind": "agree"
+ },
+ {
+  "item": "H34",
+  "run_id": "3ec956ac-0975-4ec1-a933-1c755183942f",
+  "config": "R3 B2 +FLAT",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H35",
+  "run_id": "2342a969-af66-4b98-a3d7-7a3ab8c14c63",
+  "config": "R3 B2 +ROUTING +FLAT",
+  "problem": "service_port_conflict_social_network",
+  "first_judge": true,
+  "gpt54": true,
+  "kind": "agree"
+ },
+ {
+  "item": "H36",
+  "run_id": "b6dfa08b-fc8f-467a-870e-1db7d326ae4f",
+  "config": "R3 B2 +FLAT",
+  "problem": "feature_flag_latent_bug_hotel_reservation",
+  "first_judge": false,
+  "gpt54": false,
+  "kind": "agree"
+ },
+ {
+  "item": "H37",
+  "run_id": "af00c33e-c90b-4110-8376-f85bb721c98a",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "service_port_conflict_social_network",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H38",
+  "run_id": "56f70a1d-4e5d-4ec3-8799-8a858155e909",
+  "config": "R3 B2 +ROUTING +FLAT +PROCV2",
+  "problem": "feature_flag_latent_bug_hotel_reservation",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H39",
+  "run_id": "63430c11-4fdd-46fd-ae96-55a40b0f8018",
+  "config": "R3 B2 +FLAT",
+  "problem": "storage_user_unregistered-2",
+  "first_judge": true,
+  "gpt54": false,
+  "kind": "disagree"
+ },
+ {
+  "item": "H40",
+  "run_id": "7e8e477d-b53a-47e6-b428-ec8bdb80e8ed",
+  "config": "R3 B2 +ROUTING +REVIEW +FLAT +PROCV2",
+  "problem": "feature_flag_latent_bug_hotel_reservation",
+  "first_judge": false,
+  "gpt54": false,
+  "kind": "agree"
+ }
+]
