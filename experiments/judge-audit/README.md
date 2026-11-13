@@ -57,3 +57,19 @@ Write the rule you applied in `reason` so disagreements can be traced.
 
 Files: `judge_audit.py` (draw and score), `test_judge_audit.py` (synthetic test), `labeler-sheet-template.csv`
 (columns and one example row).
+
+## The 40-item check for the SRC abstract (13 Nov 2026)
+
+`ReliOps-judge-check-40.xlsx` holds 40 step-2 diagnoses: the 27 on which the two judges disagree, 7 both passed and 6
+both failed (seed 20261113, shuffled). `judge-check-40-key.json` maps each item to its run and both verdicts; the
+labeler does not open it.
+
+How it is labeled: one team member (the first author), on a private page that shows, per fault, a plain-language brief
+(what was injected, what a correct diagnosis must name, what it must not blame; taken from the problem card, which is
+derived from SREGym's structured root cause) and, per diagnosis, two questions: right place (D1) and right cause (D2).
+A diagnosis is correct when both are yes. Neither judge's verdict is on the page.
+
+Limits to state wherever the result is used: one labeler, not a Kubernetes expert; the briefs were written with an AI
+assistant that knew which faults the judges dispute, so they are kept to the card's content and to questions, without
+a suggested answer; 40 items, 27 of them chosen because the judges disagree, so the sample says which judge a person
+sides with on disputed items and says nothing about overall accuracy.
