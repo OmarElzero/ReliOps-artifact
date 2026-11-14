@@ -1,0 +1,122 @@
+{
+ "H01": {
+  "correct": false
+ },
+ "H02": {
+  "correct": true
+ },
+ "H03": {
+  "correct": true
+ },
+ "H04": {
+  "correct": true
+ },
+ "H05": {
+  "correct": true
+ },
+ "H06": {
+  "correct": false
+ },
+ "H07": {
+  "correct": true
+ },
+ "H08": {
+  "correct": false
+ },
+ "H09": {
+  "correct": false
+ },
+ "H10": {
+  "correct": true
+ },
+ "H11": {
+  "correct": true
+ },
+ "H12": {
+  "correct": true
+ },
+ "H13": {
+  "correct": true
+ },
+ "H14": {
+  "correct": true
+ },
+ "H15": {
+  "correct": false
+ },
+ "H16": {
+  "correct": true
+ },
+ "H17": {
+  "correct": true
+ },
+ "H18": {
+  "correct": false
+ },
+ "H19": {
+  "correct": false
+ },
+ "H20": {
+  "correct": false
+ },
+ "H21": {
+  "correct": false
+ },
+ "H22": {
+  "correct": true
+ },
+ "H23": {
+  "correct": false
+ },
+ "H24": {
+  "correct": true
+ },
+ "H25": {
+  "correct": false
+ },
+ "H26": {
+  "correct": false
+ },
+ "H27": {
+  "correct": true
+ },
+ "H28": {
+  "correct": false
+ },
+ "H29": {
+  "correct": false
+ },
+ "H30": {
+  "correct": true
+ },
+ "H31": {
+  "correct": false
+ },
+ "H32": {
+  "correct": true
+ },
+ "H33": {
+  "correct": false
+ },
+ "H34": {
+  "correct": false
+ },
+ "H35": {
+  "correct": true
+ },
+ "H36": {
+  "correct": false
+ },
+ "H37": {
+  "correct": false
+ },
+ "H38": {
+  "correct": false
+ },
+ "H39": {
+  "correct": false
+ },
+ "H40": {
+  "correct": false
+ }
+}
