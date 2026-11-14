@@ -17,7 +17,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-AGENT_NAMES = ("reliops_v1", "reliops_v2")
+AGENT_NAMES = ("reliops_v1", "reliops_v2", "reliops_v3")
 
 
 def patch_agents_yaml(sregym_dir: Path) -> bool:
@@ -45,10 +45,11 @@ def patch_agents_yaml(sregym_dir: Path) -> bool:
 def patch_provider_endpoints(sregym_dir: Path) -> bool:
     path = sregym_dir / "sregym" / "service" / "provider_endpoints.py"
     text = path.read_text(encoding="utf-8")
-    new = 'if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2"}:'
+    new = 'if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2", "reliops_v3"}:'
     if new in text:
         return False
-    for old in ('if agent in {"stratus", "mini-sre", "reliops_v1"}:', 'if agent in {"stratus", "mini-sre"}:'):
+    for old in ('if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2"}:', 'if agent in {"stratus", "mini-sre", "reliops_v1"}:',
+                'if agent in {"stratus", "mini-sre"}:'):
         if text.count(old) == 1:
             path.write_text(text.replace(old, new, 1), encoding="utf-8")
             return True
@@ -59,12 +60,13 @@ def forwarded_env_names() -> list[str]:
     """Every REACT_V1_* name the agents read. The switch names come from agent/react_v2/features.py itself, so a new switch
     can never be left off the whitelist (round 2's switches were, before this)."""
     import importlib.util
-    spec = importlib.util.spec_from_file_location("_v2_features", REPO_ROOT / "agent" / "react_v2" / "features.py")
+    # react_v3's switch list is a superset of react_v2's (plan 22), so it covers both agents.
+    spec = importlib.util.spec_from_file_location("_v3_features", REPO_ROOT / "agent" / "react_v3" / "features.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     fixed = ["REACT_V1_ACTION_SPACE", "REACT_V1_LOG_OBS", "REACT_V1_LOG_OBS_MAX", "REACT_V1_BUDGET_AWARE", "REACT_V1_SOAK_S",
              "REACT_V1_VARIANT", "REACT_V1_MAX_MODEL_FAILURES", "REACT_V1_RETRY_WAIT_S", "REACT_V1_VERIFY_WAIT_S",
-             "REACT_V1_MAX_UNDO_ROUNDS"]
+             "REACT_V1_MAX_UNDO_ROUNDS", "REACT_V1_EVIDENCE_MODE", "REACT_V1_T1_WAIT_S", "REACT_V1_T1_MAX_ROUNDS"]
     return fixed + [f"REACT_V1_{n}" for n in mod.SWITCHES if f"REACT_V1_{n}" not in fixed]
 
 
