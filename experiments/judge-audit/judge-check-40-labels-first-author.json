@@ -1,0 +1,242 @@
+{
+ "H02": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H27": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H03": {
+  "v": true,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H33": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "no"
+ },
+ "H07": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H16": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H17": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H32": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H29": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "no"
+ },
+ "H05": {
+  "v": true,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H36": {
+  "v": false,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H38": {
+  "v": true,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H40": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "no"
+ },
+ "H04": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H12": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H18": {
+  "v": false,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H30": {
+  "v": true,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H11": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H19": {
+  "v": true,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H20": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H35": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H37": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H01": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "yes"
+ },
+ "H08": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H23": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "yes"
+ },
+ "H25": {
+  "v": true,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H26": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "yes"
+ },
+ "H28": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "no"
+ },
+ "H34": {
+  "v": true,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H39": {
+  "v": true,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "yes"
+ },
+ "H06": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "no"
+ },
+ "H09": {
+  "v": false,
+  "unsure": false,
+  "d1": "no",
+  "d2": "no"
+ },
+ "H10": {
+  "v": false,
+  "unsure": false,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H13": {
+  "v": false,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H14": {
+  "v": false,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H15": {
+  "v": false,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H21": {
+  "v": false,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H22": {
+  "v": false,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H24": {
+  "v": false,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "no"
+ },
+ "H31": {
+  "v": false,
+  "unsure": true,
+  "d1": "yes",
+  "d2": "no"
+ }
+}
