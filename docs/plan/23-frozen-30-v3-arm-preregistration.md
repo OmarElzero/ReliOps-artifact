@@ -18,7 +18,7 @@ they are; this adds one arm, run once.
 FLAT_ARGS PROC_V2 EVIDENCE_FIRST TRANSACTIONAL_FIX`, `REACT_V1_EVIDENCE_MODE=cards` (collector r4), the same model and
 first judge as plan 19 (`gemini/gemini-3.5-flash-lite`), 30 problems x 3 repeats, same SREGym copy and profile.
 
-Code: `agent/react_v3_r4` at tree hash `72a5f6bfda77e6c4` (sha256 over path and bytes of every file, `__pycache__`
+Code: `agent/react_v3_r4` at commit `a7f87c3`, tree hash `72a5f6bfda77e6c4` (sha256 over path and bytes of every file, `__pycache__`
 excluded; the copy in the Lab's SREGym clone has the same hash on 15 Nov 11:50). No change after this addendum is approved.
 
 ## Comparisons and decision rule (written before the run)
