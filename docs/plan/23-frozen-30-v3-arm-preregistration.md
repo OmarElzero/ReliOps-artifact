@@ -55,3 +55,6 @@ reference, without tests against this arm.
 - [x] Approved by the team lead: 15 Nov 2026.
 - [x] Frozen results read by anyone before approval: **no**. Only progress counts (how many frozen runs had finished, on
   the Lab's machine table) had been seen, not any pass/fail result.
+- Exposure noted 15 Nov ~19:10: a screenshot of the Lab table shared within the team showed one frozen row, `F30 STRATUS`,
+  failed with "Max retries exceeded" (an API failure on the cloud machine, no agent result). Nothing about the compared arms was
+  shown. From then on the Lab table is filtered to the dev experiment until the v3 frozen arm has finished.
