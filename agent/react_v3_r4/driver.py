@@ -476,6 +476,24 @@ def dispatch_action(action_name: str, args: dict, namespace: str, actions: dict,
     return ACTION_OBSERVATION_TEMPLATE.format(code=result.exit_code, body=body[:8000]), True
 
 
+_READ_VERBS = re.compile(r"^\s*kubectl\s+(?:-n\s+\S+\s+|--namespace[= ]\S+\s+)?(get|describe|logs|top|explain|api-resources|api-versions|version|auth\s+can-i|wait|events)\b")
+
+
+def is_read_command(action: str, args: dict) -> bool:
+    """r4.4: a shell command that only reads (kubectl get/describe/logs/...; no pipe into apply, no redirect, no ';' or '&&'
+    chain) is a read for T1, even though it goes through a write-capable action. Before this, T1 took such a read for a new
+    change and asked for proof again, in a loop until the step cap (15 Nov 2026, gc_capacity, V3 A +T1)."""
+    if action not in ("exec_kubectl_guarded", "exec_shell", "run_shell"):
+        return False
+    cmd = str(args.get("cmd") or args.get("command") or "")
+    if not cmd or any(t in cmd for t in ("|", ";", "&&", ">", "<<", "$(", "`")):
+        return False
+    return bool(_READ_VERBS.match(cmd))
+
+
+T1_MAX_PROOF_ASKS = 3     # r4.4: after this many proof requests without a proof read, the submit goes through
+
+
 def final_diagnosis(backend, session: "Session", drafted: str, feature_event) -> str:
     """C-030 / C-031: rewrite the submitted diagnosis. Earlier replies are sent as user notes (blank-reply rule, C-012).
     Any failure keeps the agent's own diagnosis."""
@@ -541,6 +559,7 @@ def run_stage(
     t1_phase = None                 # None | "await_proof" | "await_verdict" | "proven"
     t1_rounds = 0
     t1_refusals = 0
+    t1_proof_asks = 0
 
     def feature_event(name: str, event: str, **extra) -> None:
         transcript.write({"type": "feature", "name": name, "stage": stage, "event": event, **extra})
@@ -669,9 +688,13 @@ def run_stage(
                 if t1_phase == "await_verdict":
                     t1_phase = "proven"
                     feature_event("TRANSACTIONAL_FIX", "proven", round=t1_rounds)
+                elif t1_phase is None and t1_proof_asks >= T1_MAX_PROOF_ASKS:
+                    t1_phase = "proven"                           # r4.4 safety valve: the submit goes through now
+                    feature_event("TRANSACTIONAL_FIX", "proof_asks_exhausted", asks=t1_proof_asks)
                 elif t1_refusals < T1_MAX_REFUSALS:
                     if t1_phase is None:
                         t1_phase = "await_proof"
+                        t1_proof_asks += 1
                         feature_event("TRANSACTIONAL_FIX", "proof_asked", writes=t1_writes)
                         session.add_user(T1_PROOF_TEXT.format(seconds=T1_WAIT_S))
                     else:
@@ -681,7 +704,8 @@ def run_stage(
                     continue
                 else:
                     feature_event("TRANSACTIONAL_FIX", "let_through", refusals=t1_refusals)
-            elif t1_phase == "await_proof" and action_name in actions and action_name not in WRITE_ACTIONS and action_name != "submit":
+            elif t1_phase == "await_proof" and action_name in actions and action_name != "submit" and (
+                    action_name not in WRITE_ACTIONS or is_read_command(action_name, args)):
                 time.sleep(T1_WAIT_S)
                 proof, valid = dispatch_action(action_name, args, namespace, actions)
                 status, _ = dispatch_action("get_pod_status", {}, namespace, actions)
@@ -692,7 +716,7 @@ def run_stage(
                 session.add_user(T1_VERDICT_TEXT.format(seconds=T1_WAIT_S, action=f"{action_name} {json.dumps(args, ensure_ascii=False)}",
                                                         proof=proof, status=status))
                 continue
-            elif action_name in WRITE_ACTIONS and action_name in actions:
+            elif action_name in WRITE_ACTIONS and action_name in actions and not is_read_command(action_name, args):
                 for kind, name, ns in inspect_tools.write_targets(action_name, args, namespace):
                     key = (kind.lower(), name, ns)
                     if key not in t1_snaps:
