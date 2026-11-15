@@ -60,3 +60,10 @@ of the 20 Nov workshop deadline. In the interim export no A variant led the plai
 - Expectation written before the run: no detectable difference end to end; the first judge's diagnosis rates higher
   than GPT-5.4's by 10 to 20 points. The two-labeler hand label sides with each judge on roughly half of the disputed
   diagnoses.
+
+
+## Planned deviation (15 Nov 2026)
+
+Frozen runs that end on the model's per-minute limit (an infrastructure failure, no agent result) are re-run after the
+confirmation finishes, through a key-rotating proxy (same model and requests; plan 24 section 6). Which runs and when is
+recorded here when it happens.
