@@ -47,7 +47,7 @@ from .actions import OPTIONAL_ARGS, PROCEDURES_FILE, WRITE_ACTIONS, actions_for,
 from .pricing import cost_usd, price_note  # noqa: E402
 from . import evidence  # noqa: E402
 from .prompts import EVIDENCE_TEXT, T1_PROOF_TEXT, T1_REFUSED_TEXT, T1_RESTORED_TEXT, T1_VERDICT_TEXT  # noqa: E402
-from .prompts import FINAL_DIAGNOSIS_TEXT, VOTE_PICK_TEXT  # noqa: E402
+from .prompts import FINAL_DIAGNOSIS_TEXT, VOTE_PICK_TEXT, MITIGATION_START_TEXT, T1_NO_CHANGE_TEXT  # noqa: E402
 from .prompts import (  # noqa: E402
     ACTION_OBSERVATION_TEMPLATE,
     EMPTY_DIAGNOSIS_TEXT,
@@ -561,6 +561,10 @@ def run_stage(
         session.add_user(f"Submission accepted for stage '{stage}'.")
         return outcome("submitted" if accepted else "null_submit_failed")
 
+    if stage == "mitigation" and (FEATURES["EVIDENCE_FIRST"] or FEATURES["TRANSACTIONAL_FIX"]):
+        session.add_user(MITIGATION_START_TEXT)                     # r4.1
+        feature_event("EVIDENCE_FIRST" if FEATURES["EVIDENCE_FIRST"] else "TRANSACTIONAL_FIX", "mitigation_start_shown")
+    t1_no_change_told = False
     if FEATURES["EVIDENCE_FIRST"] and stage == "diagnosis":
         t_ev = time.monotonic()
         try:
@@ -653,7 +657,15 @@ def run_stage(
                 session.add_user(T1_RESTORED_TEXT.format(undone="\n".join(f"- {u}" for u in undone) or "- nothing was recorded",
                                                          left=T1_MAX_ROUNDS - t1_rounds))
                 continue
-            if action_name == "submit" and t1_writes > 0 and t1_phase != "proven":
+            if action_name == "submit" and t1_writes == 0 and _writes_total == 0 and not t1_no_change_told:
+                t1_no_change_told = True                                  # r4.1: refuse once a submit with no change at all
+                feature_event("TRANSACTIONAL_FIX", "no_change_refused")
+                session.add_user(T1_NO_CHANGE_TEXT)
+                continue
+            # r4.2: changes made in the diagnosis stage count too (ROUTING allows writes once a procedure is loaded; seen on the
+            # cluster 15 Nov: 7 writes in diagnosis, then an immediate mitigation submit that T1 let through). Only the
+            # mitigation-stage changes can be restored.
+            if action_name == "submit" and (t1_writes > 0 or _writes_total > 0) and t1_phase != "proven":
                 if t1_phase == "await_verdict":
                     t1_phase = "proven"
                     feature_event("TRANSACTIONAL_FIX", "proven", round=t1_rounds)
