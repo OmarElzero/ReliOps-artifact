@@ -48,6 +48,7 @@ from .pricing import cost_usd, price_note  # noqa: E402
 from . import evidence  # noqa: E402
 from .prompts import EVIDENCE_TEXT, T1_PROOF_TEXT, T1_REFUSED_TEXT, T1_RESTORED_TEXT, T1_VERDICT_TEXT  # noqa: E402
 from .prompts import FINAL_DIAGNOSIS_TEXT, VOTE_PICK_TEXT, MITIGATION_START_TEXT, T1_NO_CHANGE_TEXT  # noqa: E402
+from .prompts import T1_DRIVER_FAIL_TEXT  # noqa: E402
 from .prompts import (  # noqa: E402
     ACTION_OBSERVATION_TEMPLATE,
     EMPTY_DIAGNOSIS_TEXT,
@@ -560,6 +561,7 @@ def run_stage(
     t1_rounds = 0
     t1_refusals = 0
     t1_proof_asks = 0
+    t1_driver_checked = False
 
     def feature_event(name: str, event: str, **extra) -> None:
         transcript.write({"type": "feature", "name": name, "stage": stage, "event": event, **extra})
@@ -580,6 +582,13 @@ def run_stage(
         session.add_user(f"Submission accepted for stage '{stage}'.")
         return outcome("submitted" if accepted else "null_submit_failed")
 
+    t1_baseline = None
+    if stage == "mitigation" and FEATURES["TRANSACTIONAL_FIX"] and FEATURES["T1_DRIVER"]:
+        try:                                                        # T1 v2: health findings before any mitigation change
+            t1_baseline = inspect_tools.finding_keys(inspect_tools.scoped(inspect_tools.sweep_findings(), namespace))
+            feature_event("T1_DRIVER", "baseline", findings=len(t1_baseline))
+        except Exception as e:  # noqa: BLE001
+            feature_event("T1_DRIVER", "baseline_failed", error=str(e)[:200])
     if stage == "mitigation" and (FEATURES["EVIDENCE_FIRST"] or FEATURES["TRANSACTIONAL_FIX"]):
         session.add_user(MITIGATION_START_TEXT)                     # r4.1
         feature_event("EVIDENCE_FIRST" if FEATURES["EVIDENCE_FIRST"] else "TRANSACTIONAL_FIX", "mitigation_start_shown")
@@ -684,6 +693,30 @@ def run_stage(
             # r4.2: changes made in the diagnosis stage count too (ROUTING allows writes once a procedure is loaded; seen on the
             # cluster 15 Nov: 7 writes in diagnosis, then an immediate mitigation submit that T1 let through). Only the
             # mitigation-stage changes can be restored.
+            if (FEATURES["T1_DRIVER"] and action_name == "submit" and t1_baseline is not None and t1_phase is None
+                    and (t1_writes > 0 or _writes_total > 0) and not t1_driver_checked):
+                t1_driver_checked = True                     # T1 v2: the driver judges first, once per round of changes
+                time.sleep(T1_WAIT_S)
+                try:
+                    after_f = inspect_tools.scoped(inspect_tools.sweep_findings(), namespace)
+                    v = inspect_tools.verdict(t1_baseline, inspect_tools.finding_keys(after_f))
+                except Exception as e:  # noqa: BLE001
+                    v, after_f = "unknown", []
+                    feature_event("T1_DRIVER", "check_failed", error=str(e)[:200])
+                feature_event("T1_DRIVER", "verdict", verdict=v, round=t1_rounds)
+                if v in ("worse", "no_effect") and t1_rounds < T1_MAX_ROUNDS:
+                    undone = [inspect_tools.restore(snap) for snap in reversed(list(t1_snaps.values()))]
+                    t1_rounds += 1
+                    feature_event("T1_DRIVER", "restored", objects=len(undone), round=t1_rounds)
+                    t1_snaps.clear(); t1_writes = 0; t1_phase = None; t1_proof_asks = 0
+                    listed = "\n".join(f"- {k} {key}: {t}" for k, key, t in after_f[:12]) or "- none"
+                    why = ("a problem appeared that was not there before your change" if v == "worse"
+                           else "the problems seen before your change are all still there")
+                    und = ("Restored to the state before your changes:\n" + "\n".join(f"- {u}" for u in undone)) if undone else \
+                          "Nothing could be restored automatically (the change was not recorded); undo it yourself if it was wrong."
+                    session.add_user(T1_DRIVER_FAIL_TEXT.format(seconds=T1_WAIT_S, why=why, findings=listed, undone=und,
+                                                                left=T1_MAX_ROUNDS - t1_rounds))
+                    continue
             if action_name == "submit" and (t1_writes > 0 or _writes_total > 0) and t1_phase != "proven":
                 if t1_phase == "await_verdict":
                     t1_phase = "proven"
@@ -725,6 +758,7 @@ def run_stage(
                             t1_snaps[key] = snap
                             feature_event("TRANSACTIONAL_FIX", "recorded", kind=kind, object=name, absent=snap.get("absent", False))
                 t1_writes += 1
+                t1_driver_checked = False
                 if t1_phase is not None:
                     feature_event("TRANSACTIONAL_FIX", "new_write_resets_proof", phase=t1_phase)
                     t1_phase = None

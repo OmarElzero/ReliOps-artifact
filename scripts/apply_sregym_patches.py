@@ -61,12 +61,12 @@ def forwarded_env_names() -> list[str]:
     can never be left off the whitelist (round 2's switches were, before this)."""
     import importlib.util
     # react_v3's switch list is a superset of react_v2's (plan 22), so it covers both agents.
-    spec = importlib.util.spec_from_file_location("_v3_features", REPO_ROOT / "agent" / "react_v3" / "features.py")
+    spec = importlib.util.spec_from_file_location("_v3_features", REPO_ROOT / "agent" / "react_v3_r4" / "features.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     fixed = ["REACT_V1_ACTION_SPACE", "REACT_V1_LOG_OBS", "REACT_V1_LOG_OBS_MAX", "REACT_V1_BUDGET_AWARE", "REACT_V1_SOAK_S",
              "REACT_V1_VARIANT", "REACT_V1_MAX_MODEL_FAILURES", "REACT_V1_RETRY_WAIT_S", "REACT_V1_VERIFY_WAIT_S",
-             "REACT_V1_MAX_UNDO_ROUNDS", "REACT_V1_EVIDENCE_MODE", "REACT_V1_T1_WAIT_S", "REACT_V1_T1_MAX_ROUNDS"]
+             "REACT_V1_MAX_UNDO_ROUNDS", "REACT_V1_EVIDENCE_MODE", "REACT_V1_T1_WAIT_S", "REACT_V1_T1_MAX_ROUNDS", "REACT_V1_FINAL_MODEL"]
     return fixed + [f"REACT_V1_{n}" for n in mod.SWITCHES if f"REACT_V1_{n}" not in fixed]
 
 

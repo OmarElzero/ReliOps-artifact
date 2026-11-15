@@ -361,3 +361,11 @@ fault in place."""
 
 T1_NO_CHANGE_TEXT = """No change has been made in the mitigation stage, so the fault is still there. Apply a fix for the diagnosed root cause
 with a write action first, then submit."""
+
+
+# Plan 24, C-033 (T1_DRIVER, T1 v2): the driver's own check after a fix.
+T1_DRIVER_FAIL_TEXT = """Driver check {seconds} s after your change: {why}.
+Health findings in the namespace now:
+{findings}
+{undone}
+Choose a different kind of fix (a different object, field or action), apply it, then submit again. Rounds left: {left}."""
