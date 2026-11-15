@@ -18,7 +18,7 @@ they are; this adds one arm, run once.
 Rule, written 15 Nov 17:40 before the dev-12 cluster runs finish: of `V3 A +T1` (A + `TRANSACTIONAL_FIX`) and
 `V3 A +CARDS +T1` (A + `EVIDENCE_FIRST` + `TRANSACTIONAL_FIX`), the arm with the higher dev-12 cluster mitigation pass
 (Lab experiment "Dev - V3 r4.1 - first try", runs that ended on an API-quota error excluded) goes to the frozen 30. If the
-two differ by one run or less, `V3 A +T1` goes (fewer parts). Both use the same code (commit `a7f87c3`). Reason for the
+two differ by one run or less, `V3 A +T1` goes (fewer parts). Both use the same code (commit `efc7bdc`, r4.4). Reason for the
 change from the 11:50 draft: on the cluster the cards did not raise the diagnosis (plan 22, 15 Nov 17:30).
 
 Default text below describes `V3 A +CARDS +T1`; for `V3 A +T1` drop `EVIDENCE_FIRST` and the evidence mode.
@@ -27,7 +27,7 @@ Default text below describes `V3 A +CARDS +T1`; for `V3 A +T1` drop `EVIDENCE_FI
 FLAT_ARGS PROC_V2 EVIDENCE_FIRST TRANSACTIONAL_FIX`, `REACT_V1_EVIDENCE_MODE=cards` (collector r4), the same model and
 first judge as plan 19 (`gemini/gemini-3.5-flash-lite`), 30 problems x 3 repeats, same SREGym copy and profile.
 
-Code: `agent/react_v3_r4` at commit `a7f87c3`, tree hash `72a5f6bfda77e6c4` (sha256 over path and bytes of every file, `__pycache__`
+Code: `agent/react_v3_r4` at commit `efc7bdc`, tree hash `1451b865e2542881` (r4.4; was `a7f87c3` / r4.2 until 15 Nov 19:10, changed before any frozen v3 run because T1 looped to the step cap when the proof read went through the shell: 2 dev runs affected, one of them ended without a submission; the pin moves, the rule does not) (sha256 over path and bytes of every file, `__pycache__`
 excluded; the copy in the Lab's SREGym clone has the same hash on 15 Nov 11:50). No change after this addendum is approved.
 
 ## Comparisons and decision rule (written before the run)
