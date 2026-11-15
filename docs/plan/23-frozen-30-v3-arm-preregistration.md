@@ -1,6 +1,7 @@
 # 23. Frozen 30: pre-registration of the react_v3 arm (addendum to plan 19)
 
-Status: **draft for the team lead's approval, written 15 Nov 2026 11:50, before any frozen-30 result has been read.**
+Status: **approved by the team lead on 15 Nov 2026 (about 17:40), with the arm to be chosen on 16 Nov by the rule below.**
+Written 15 Nov 11:50, before any frozen-30 result had been read.
 The frozen queue ("Final - Frozen 30 confirmation - first try") is running on the cloud machine; its runs are not opened
 until this addendum is approved and committed. If anyone has read frozen results before approval, that is stated here at
 approval and the arm is reported as exploratory, not confirmatory.
@@ -12,7 +13,15 @@ on dev-12 only: evidence cards before the first diagnosis turn (C-027) and a tra
 for the paper is whether those gains hold on problems the changes were not shaped on. Plan 19's arms stay exactly as
 they are; this adds one arm, run once.
 
-## Arm (fixed)
+## Arm (chosen on 16 Nov by a rule fixed now)
+
+Rule, written 15 Nov 17:40 before the dev-12 cluster runs finish: of `V3 A +T1` (A + `TRANSACTIONAL_FIX`) and
+`V3 A +CARDS +T1` (A + `EVIDENCE_FIRST` + `TRANSACTIONAL_FIX`), the arm with the higher dev-12 cluster mitigation pass
+(Lab experiment "Dev - V3 r4.1 - first try", runs that ended on an API-quota error excluded) goes to the frozen 30. If the
+two differ by one run or less, `V3 A +T1` goes (fewer parts). Both use the same code (commit `a7f87c3`). Reason for the
+change from the 11:50 draft: on the cluster the cards did not raise the diagnosis (plan 22, 15 Nov 17:30).
+
+Default text below describes `V3 A +CARDS +T1`; for `V3 A +T1` drop `EVIDENCE_FIRST` and the evidence mode.
 
 `F30 V3 A +CARDS +T1`: agent `reliops_v3`, switches `TOKEN_LOG EMPTY_SUBMIT_GUARD OPTIONAL_ARGS ROUTING ROUTE_REVIEW
 FLAT_ARGS PROC_V2 EVIDENCE_FIRST TRANSACTIONAL_FIX`, `REACT_V1_EVIDENCE_MODE=cards` (collector r4), the same model and
@@ -43,5 +52,5 @@ reference, without tests against this arm.
 
 ## Approval
 
-- [ ] Approved by the team lead (date): ________
+- [x] Approved by the team lead: 15 Nov 2026.
 - [ ] Frozen results read by anyone before approval: yes / no
