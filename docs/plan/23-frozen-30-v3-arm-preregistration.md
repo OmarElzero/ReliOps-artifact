@@ -30,6 +30,9 @@ first judge as plan 19 (`gemini/gemini-3.5-flash-lite`), 30 problems x 3 repeats
 Code: `agent/react_v3_r4` at commit `5955d65`, tree hash `b33df61526cc55ed` (r4.4 plus the off-by-default switch T1_DRIVER added 15 Nov 20:00 for a dev test; the frozen arm does not turn it on; before that `efc7bdc`; was `a7f87c3` / r4.2 until 15 Nov 19:10, changed before any frozen v3 run because T1 looped to the step cap when the proof read went through the shell: 2 dev runs affected, one of them ended without a submission; the pin moves, the rule does not) (sha256 over path and bytes of every file, `__pycache__`
 excluded; the copy in the Lab's SREGym clone has the same hash on 15 Nov 11:50). No change after this addendum is approved.
 
+**16 Nov addition:** a second react_v3 arm, `F30 V3 A +T1v2` (same pinned code), is pre-registered in `docs/plan/25`, which
+also fixes the correction for two primary tests (Holm) and the queue (6 shares, experiment `Final - Frozen 30 V3 - first try`).
+
 ## Comparisons and decision rule (written before the run)
 
 Paired by problem and repeat against plan 19's `F30 A` (same switches minus the two new ones):
