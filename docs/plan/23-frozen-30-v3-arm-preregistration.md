@@ -53,6 +53,17 @@ reference, without tests against this arm.
 - **Quota.** Runs that end on an API quota error are re-run (they are infrastructure failures, not agent results), as
   the Lab already does; the count is reported.
 
+## The rule applied (16 Nov 2026, 18:30)
+
+Dev-12 cluster mitigation pass, Lab experiment "Dev - V3 r4.1 - first try", all Lab machines, runs that ended on an
+infrastructure error (quota, rate limit, judge check, rejected key, app deploy, cluster not ready) excluded:
+`V3 A +CARDS +T1` 17/29, `V3 A +T1` 15/29. They differ by two runs, so the rule picks **`F30 V3 A +CARDS +T1`**.
+
+Deviation: the rule was applied before the dev runs were complete. Share 5 (6 problems on one team machine) lost about 8
+cells per step to infrastructure errors overnight and its cluster could not deploy the apps through 16 Nov; waiting would
+have cost the frozen runs the time they need before the 19 Nov deadline. The team lead approved applying it now (16 Nov
+18:30). The arm is added as a step of queue `fe1e776c37` (plan 25 section 4).
+
 ## Approval
 
 - [x] Approved by the team lead: 15 Nov 2026.
