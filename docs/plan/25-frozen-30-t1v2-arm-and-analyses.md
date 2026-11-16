@@ -50,6 +50,13 @@ with the `F30 V3 A +T1v2` step only (queue `fe1e776c37`, same name, experiment a
 arm is added to the same queue as a second step once the rule has picked it (`make_f30_v3_queue.py --arm X --queue-id
 fe1e776c37 --post`). Same code, model, judge, problems and repeats; only the order in time differs.
 
+**Duplicate cells (fixed 16 Nov 21:15, before any v3 frozen result is read).** A team machine ran the queue with no share
+picked (all problems) for a while, so some cells may have two valid runs. For every arm, a cell counts once: its earliest
+valid run by `timestamp_utc` (runs ended by an infrastructure error are not valid). Later duplicates are kept in the records
+and reported as a count, not used in any test. The same rule applies to the plan 19 arms, where the same machine re-ran a
+few cells of `F30 A`, `F30 B2 +FLAT` and `F30 STRATUS` under this experiment's name: those rows belong to plan 19's arms and
+are not used here at all.
+
 ## 5. Analyses added (no extra runs; all fixed now, all reported)
 
 1. **Second judge.** Re-judge every frozen-30 run of all five arms with a second judge model from another provider
@@ -75,3 +82,7 @@ leave it bound to the deleted volume (C-034, fixed in r4.5 only), which both T1 
 
 - [x] Approved by the team lead: 16 Nov 2026 (see Status).
 - [x] Frozen results read by anyone before approval: no pass/fail result (see Status for the screenshot of 04:38).
+- Exposure noted 16 Nov 21:00: while checking the key proxy on the cloud machine, the end of a Lab queue log showed one action of an
+  `F30 STRATUS` re-run on one frozen problem (a kubectl command it chose). No diagnosis, mitigation or judge result was
+  shown; STRATUS is a reference arm without tests. Queue logs of frozen runs are not opened again; the proxy is checked
+  only through its own log.
