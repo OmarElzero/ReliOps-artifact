@@ -44,6 +44,12 @@ model, judge and purpose from plan 19's queue (`7b033fffb6`), so the two queues 
 an API quota or other infrastructure error are re-run, and counted and reported (plan 19 rule). Each machine runs with
 its own keys, one key per Google Cloud project.
 
+**Start order (16 Nov 10:45).** The dev-12 runs of share 5 were lost overnight (judge-check failures on that machine) and
+must be re-run before the plan 23 rule can pick its arm. The plan 25 arm does not depend on that rule, so the queue was saved
+with the `F30 V3 A +T1v2` step only (queue `fe1e776c37`, same name, experiment and 6 shares) and started first; the plan 23
+arm is added to the same queue as a second step once the rule has picked it (`make_f30_v3_queue.py --arm X --queue-id
+fe1e776c37 --post`). Same code, model, judge, problems and repeats; only the order in time differs.
+
 ## 5. Analyses added (no extra runs; all fixed now, all reported)
 
 1. **Second judge.** Re-judge every frozen-30 run of all five arms with a second judge model from another provider
