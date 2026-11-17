@@ -86,3 +86,9 @@ leave it bound to the deleted volume (C-034, fixed in r4.5 only), which both T1 
   `F30 STRATUS` re-run on one frozen problem (a kubectl command it chose). No diagnosis, mitigation or judge result was
   shown; STRATUS is a reference arm without tests. Queue logs of frozen runs are not opened again; the proxy is checked
   only through its own log.
+- Exposure noted 17 Nov 05:10: a Lab Queue-tab screenshot shared within the team showed a PASS / FAIL count per share of
+  the v3 frozen queue (both arms pooled, metric not labelled) while 11 of its 180 runs were still to do. Seen by the team
+  lead and the analysis assistant.
+  Nothing decided after that point depends on results: arms, tests, the duplicate rule and the analyses were fixed before;
+  the remaining work is finishing the same cells. From then on the Queue tab is used without that column until both arms
+  are complete.
