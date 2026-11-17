@@ -17,7 +17,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-AGENT_NAMES = ("reliops_v1", "reliops_v2", "reliops_v3")
+AGENT_NAMES = ("reliops_v1", "reliops_v2", "reliops_v3", "reliops_v5")
 
 
 def patch_agents_yaml(sregym_dir: Path) -> bool:
@@ -45,10 +45,11 @@ def patch_agents_yaml(sregym_dir: Path) -> bool:
 def patch_provider_endpoints(sregym_dir: Path) -> bool:
     path = sregym_dir / "sregym" / "service" / "provider_endpoints.py"
     text = path.read_text(encoding="utf-8")
-    new = 'if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2", "reliops_v3"}:'
+    new = 'if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2", "reliops_v3", "reliops_v5"}:'
     if new in text:
         return False
-    for old in ('if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2"}:', 'if agent in {"stratus", "mini-sre", "reliops_v1"}:',
+    for old in ('if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2", "reliops_v3"}:',
+                'if agent in {"stratus", "mini-sre", "reliops_v1", "reliops_v2"}:', 'if agent in {"stratus", "mini-sre", "reliops_v1"}:',
                 'if agent in {"stratus", "mini-sre"}:'):
         if text.count(old) == 1:
             path.write_text(text.replace(old, new, 1), encoding="utf-8")
@@ -60,8 +61,8 @@ def forwarded_env_names() -> list[str]:
     """Every REACT_V1_* name the agents read. The switch names come from agent/react_v2/features.py itself, so a new switch
     can never be left off the whitelist (round 2's switches were, before this)."""
     import importlib.util
-    # react_v3's switch list is a superset of react_v2's (plan 22), so it covers both agents.
-    spec = importlib.util.spec_from_file_location("_v3_features", REPO_ROOT / "agent" / "react_v3_r4" / "features.py")
+    # react_v3_r5's switch list is a superset of react_v3's and react_v2's (plans 22, 27), so it covers every agent.
+    spec = importlib.util.spec_from_file_location("_v5_features", REPO_ROOT / "agent" / "react_v3_r5" / "features.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     fixed = ["REACT_V1_ACTION_SPACE", "REACT_V1_LOG_OBS", "REACT_V1_LOG_OBS_MAX", "REACT_V1_BUDGET_AWARE", "REACT_V1_SOAK_S",

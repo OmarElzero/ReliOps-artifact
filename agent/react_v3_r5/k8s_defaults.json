@@ -1,0 +1,48 @@
+{
+ "_about": "Defaults table for collector family F6 (plan 21 section 4). Field paths are regular expressions over the flattened pod template spec, with list keys written as []. An entry with 'default' fires when the value differs from it; an entry without 'default' fires whenever the field is set ('whole': report the field, not each leaf). Kubernetes kinds and fields only, no application names.",
+ "_sources": {
+  "pod": "https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/",
+  "deployment": "https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/deployment-v1/",
+  "service": "https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/",
+  "status": "UNVERIFIED in the session that wrote this file (14 Nov 2026): the default values were written from memory of the API reference, the pages were not opened. The leakage reviewer checks every value against the cited page before G1 is scored."
+ },
+ "pod_template": [
+  {"path": "dnsPolicy", "default": "ClusterFirst", "source": "pod"},
+  {"path": "restartPolicy", "default": "Always", "source": "pod"},
+  {"path": "terminationGracePeriodSeconds", "default": 30, "source": "pod"},
+  {"path": "schedulerName", "default": "default-scheduler", "source": "pod"},
+  {"path": "hostNetwork", "default": false, "source": "pod"},
+  {"path": "hostPID", "default": false, "source": "pod"},
+  {"path": "hostIPC", "default": false, "source": "pod"},
+  {"path": "enableServiceLinks", "default": true, "source": "pod"},
+  {"path": "automountServiceAccountToken", "default": true, "source": "pod"},
+  {"path": "containers\\[\\]\\.(liveness|readiness|startup)Probe\\.periodSeconds", "default": 10, "source": "pod"},
+  {"path": "containers\\[\\]\\.(liveness|readiness|startup)Probe\\.timeoutSeconds", "default": 1, "source": "pod"},
+  {"path": "containers\\[\\]\\.(liveness|readiness|startup)Probe\\.failureThreshold", "default": 3, "source": "pod"},
+  {"path": "containers\\[\\]\\.(liveness|readiness|startup)Probe\\.successThreshold", "default": 1, "source": "pod"},
+  {"path": "containers\\[\\]\\.terminationMessagePolicy", "default": "File", "source": "pod"},
+  {"path": "dnsConfig\\..*", "whole": true, "source": "pod"},
+  {"path": "hostAliases.*", "whole": true, "source": "pod"},
+  {"path": "nodeName", "source": "pod"},
+  {"path": "nodeSelector\\..*", "source": "pod"},
+  {"path": "affinity\\..*", "whole": true, "source": "pod"},
+  {"path": "tolerations.*", "whole": true, "source": "pod"},
+  {"path": "topologySpreadConstraints.*", "whole": true, "source": "pod"},
+  {"path": "priorityClassName", "source": "pod"},
+  {"path": "runtimeClassName", "source": "pod"},
+  {"path": "readinessGates.*", "whole": true, "source": "pod"}
+ ],
+ "workload": [
+  {"kind": "Deployment", "path": "strategy.type", "default": "RollingUpdate", "source": "deployment"},
+  {"kind": "Deployment", "path": "progressDeadlineSeconds", "default": 600, "source": "deployment"},
+  {"kind": "Deployment", "path": "revisionHistoryLimit", "default": 10, "source": "deployment"},
+  {"kind": "Deployment", "path": "paused", "default": false, "source": "deployment"},
+  {"kind": "Deployment", "path": "minReadySeconds", "default": 0, "source": "deployment"}
+ ],
+ "service": [
+  {"path": "type", "default": "ClusterIP", "source": "service"},
+  {"path": "sessionAffinity", "default": "None", "source": "service"},
+  {"path": "internalTrafficPolicy", "default": "Cluster", "source": "service"},
+  {"path": "publishNotReadyAddresses", "default": false, "source": "service"}
+ ]
+}
