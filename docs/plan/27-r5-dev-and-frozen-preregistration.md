@@ -66,8 +66,8 @@ second judge) were then read and analysed (`sim/frozen_analysis.py`). No F30 V5 
 `58fa167ea2ccffc8`) is pinned and is not changed after this point, except for a crash fault, which would be reported.
 
 **Exposure, 17 Nov 19:15:** a Lab Queue-tab screenshot shared within the team showed a PASS / FAIL count per share of the
-F30 V5 queue while one cell (service_dns_resolution_failure_social_network, repeat 3) was still to run. Seen by the team
-lead and the analysis assistant.
+F30 V5 queue while one to three cells were still to run. The team lead did not read the numbers; the image reached the
+analysis assistant.
 Nothing decided afterwards depends on it: r5.1 is pinned and the last cell runs unchanged.
 
 ## 5. Risk
