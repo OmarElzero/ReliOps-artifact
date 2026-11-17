@@ -67,3 +67,17 @@ of the 20 Nov workshop deadline. In the interim export no A variant led the plai
 Frozen runs that end on the model's per-minute limit (an infrastructure failure, no agent result) are re-run after the
 confirmation finishes, through a key-rotating proxy (same model and requests; plan 24 section 6). Which runs and when is
 recorded here when it happens.
+
+### Applied: re-runs through the key proxy (16-17 Nov 2026)
+
+After the confirmation's first pass, `F30 STRATUS` had 15 cells missing (84 of its runs had ended on the per-minute limit);
+`F30 A` and `F30 B2 +FLAT` were complete. From 16 Nov 18:43 UTC the cloud machine re-ran the missing cells with
+"only missing" through `scripts/key_proxy.py` (plan 24 section 6b): 8 keys of separate projects, the agent's model calls
+sent to `AGENT_API_BASE=http://127.0.0.1:8790/v1beta`, forwarded to Google unchanged except for the key. Proxy log on the cloud machine
+(kept by the team, not in this artifact): 1,071 requests from 16 Nov 18:43 to 17 Nov 00:18 UTC, 1,042 answered 200, 17 x 429 and
+12 x 503 returned to the agent, 228 moved to another key after a 429 or a dead key. The Lab's network pre-check had to be
+turned off on the cloud machine (`RELIOPS_NET_WAIT_MIN=0`): it tests the API host on port 443 with TLS and so cannot pass on a local
+http proxy (Lab bug). The cloud machine's ReliOps clone was pulled to `33e625d` before these re-runs (agent/react_v2 unchanged; only the
+recorded commit differs). State on 17 Nov 04:35: `F30 STRATUS` 88/90 cells, 2 still missing. Which runs went through the
+proxy is identified by machine (the cloud machine, `machine-4` in `artifact-data/runs.csv`) and start time (after 16 Nov 18:43 UTC).
+
