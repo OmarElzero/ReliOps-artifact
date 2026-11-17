@@ -17,7 +17,8 @@ import firebase_sync, runner, store  # noqa: E402
 from google.cloud.firestore_v1.base_query import FieldFilter  # noqa: E402
 
 EXPERIMENTS = {"Final - Frozen 30 confirmation - first try": ("F30 A", "F30 B2 +FLAT", "F30 STRATUS"),
-               "Final - Frozen 30 V3 - first try": ("F30 V3 A +CARDS +T1", "F30 V3 A +T1v2")}
+               "Final - Frozen 30 V3 - first try": ("F30 V3 A +CARDS +T1", "F30 V3 A +T1v2"),
+               "Final - Frozen 30 V5 - first try": ("F30 V5",)}                                  # plan 27
 INFRA = ("quota", "RateLimit", "Max retries", "network", "Cluster not ready", "node", "judge model check",
          "before the run started", "key rejected", "ACCOUNT_STATE_INVALID", "failed to deploy")
 
