@@ -62,4 +62,5 @@ negative effect is possible; it is reported as found.
 
 ## Approval
 
-- [ ] Approved by the team lead (date):
+- [x] Approved by the team lead: 17 Nov 2026 about 08:05 (build, run the smoke gate, then the dev set and the frozen
+  set). Paper deadline 20 Nov AoE (21 Nov Cairo).
