@@ -40,7 +40,7 @@ stop and the fault is reported; no silent fix.
 **Smoke gate result (17 Nov 09:58): one code fault found and fixed (r5.1).** A dev run (storage_user_unregistered-2)
 reached the action cap; in the wrap-up the empty-diagnosis guard, ROUTE_REVIEW and then D1 each intercepted the submit, the
 wrap-up calls ran out and the run ended unsubmitted (rc 4). Fix: D1 does not ask once the wrap-up has started. Unit test
-added (`sim/test_r5.py`, case 1c). New pin: tree `58fa167ea2ccffc8` (commit below). Dev runs made with r5.0 are relabelled
+added (`sim/test_r5.py`, case 1c). New pin: tree `58fa167ea2ccffc8`, commit `bed613f`. Dev runs made with r5.0 are relabelled
 `(r5.0)` and re-run; no frozen V5 run had started.
 
 ## 3. Comparisons (fixed now)
