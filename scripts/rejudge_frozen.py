@@ -46,15 +46,23 @@ def main():
     print(f"to re-judge with {a.model}: {len(items)} runs", dict(per_arm), f"({len(have)} already done)")
     if a.dry_run or not items:
         return
-    n = 0
-    for line in runner.stream_rejudge(a.model, items, on_result=lambda rec: store.append("rejudges", rec)):
-        if "verdict" in line.lower() or "judged" in line.lower():
-            n += 1
-            if n % 25 == 0:
-                print(f"  {n}/{len(items)} done", flush=True)
-        elif any(w in line.lower() for w in ("error", "stopped", "not found", "full log")):
-            print(" ", line.strip()[:200], flush=True)
-    print("finished")
+    # Progress only: verdict lines ("-> success=...") and the diagnoses they quote are never printed (plans 23/25: no
+    # frozen result is read before every arm is complete). A line counts as a verdict if it has "success=".
+    done = {"n": 0}
+
+    def stored(rec):
+        store.append("rejudges", rec)
+        done["n"] += 1
+        if done["n"] % 25 == 0:
+            print(f"  {done['n']}/{len(items)} stored", flush=True)
+
+    for line in runner.stream_rejudge(a.model, items, on_result=stored):
+        low = line.lower()
+        if "success=" in low or low.strip().startswith("got:") or "submission" in low:
+            continue
+        if any(w in low for w in ("traceback", "stopped", "not found", "full log", "exception")):
+            print(" ", line.strip()[:160], flush=True)
+    print(f"finished: {done['n']} verdicts stored")
 
 
 if __name__ == "__main__":

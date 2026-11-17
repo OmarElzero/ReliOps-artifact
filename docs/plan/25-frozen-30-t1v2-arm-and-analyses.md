@@ -92,3 +92,8 @@ leave it bound to the deleted volume (C-034, fixed in r4.5 only), which both T1 
   Nothing decided after that point depends on results: arms, tests, the duplicate rule and the analyses were fixed before;
   the remaining work is finishing the same cells. From then on the Queue tab is used without that column until both arms
   are complete.
+- Exposure noted 17 Nov 11:10: the first start of `scripts/rejudge_frozen.py` printed five second-judge verdicts
+  (problem id and success true/false, arm not shown) for frozen runs, because its output filter let through every line
+  containing "error" (each verdict line ends "error=None"). Seen by the analysis assistant only. The script was stopped within a minute, made
+  progress-only, and restarted; nothing decided afterwards depends on those five lines (arms, tests and rules were fixed
+  before; the v3 arms had 3 cells left, which run unchanged).
