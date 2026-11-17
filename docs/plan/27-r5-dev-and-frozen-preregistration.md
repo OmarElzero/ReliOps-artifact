@@ -61,6 +61,10 @@ STRATUS action on one frozen problem in a cloud-machine log (16 Nov 21:00), and 
 arms (17 Nov 05:10). The frozen problem names were known (they are in `experiments/first-30.csv`). No frozen run of any arm
 was opened, and no fix-family list or prompt was written from a frozen problem.
 
+**17 Nov 11:50: frozen results read.** Both v3 arms reached 90/90 at 11:46; the plan 19, 23 and 25 results (including the
+second judge) were then read and analysed (`sim/frozen_analysis.py`). No F30 V5 run had started; r5.1 (tree
+`58fa167ea2ccffc8`) is pinned and is not changed after this point, except for a crash fault, which would be reported.
+
 ## 5. Risk
 
 New code goes to the frozen 30 after unit tests and the smoke gate only, without a dev-12 selection round. A smaller or
