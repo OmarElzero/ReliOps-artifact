@@ -65,6 +65,11 @@ was opened, and no fix-family list or prompt was written from a frozen problem.
 second judge) were then read and analysed (`sim/frozen_analysis.py`). No F30 V5 run had started; r5.1 (tree
 `58fa167ea2ccffc8`) is pinned and is not changed after this point, except for a crash fault, which would be reported.
 
+**Exposure, 17 Nov 19:15:** a Lab Queue-tab screenshot shared within the team showed a PASS / FAIL count per share of the
+F30 V5 queue while one cell (service_dns_resolution_failure_social_network, repeat 3) was still to run. Seen by the team
+lead and the analysis assistant.
+Nothing decided afterwards depends on it: r5.1 is pinned and the last cell runs unchanged.
+
 ## 5. Risk
 
 New code goes to the frozen 30 after unit tests and the smoke gate only, without a dev-12 selection round. A smaller or
