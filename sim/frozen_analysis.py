@@ -102,6 +102,17 @@ def main():
         h = {order[0]: pm[order[0]] < 0.025, order[1]: pm[order[0]] < 0.025 and pm[order[1]] < 0.05}
         out += ["", "Holm (plan 25, the two primary mitigation tests): " +
                 "; ".join(f"{x}: p = {pm[x]:.3f}, {'significant' if h[x] else 'not significant'}" for x in v3)]
+    if by.get("F30 V5"):
+        out += ["", "## Plan 27: F30 V5 (r5.1) paired tests (primary: mitigation vs F30 A; others secondary, uncorrected)", "",
+                "| Comparison | mitigation | diagnosis | end-to-end |", "|---|---|---|---|"]
+        for ref in ("F30 A", "F30 STRATUS", "F30 V3 A +T1v2", "F30 V3 A +CARDS +T1"):
+            row = [f"F30 V5 vs {ref}"]
+            for k in ("m", "d", "e"):
+                common = set(by[ref]) & set(by["F30 V5"])
+                b = sum(by["F30 V5"][x][k] and not by[ref][x][k] for x in common)
+                c = sum(by[ref][x][k] and not by["F30 V5"][x][k] for x in common)
+                row.append(f"{b}:{c}, p = {sign_test(b, c):.3f}")
+            out.append("| " + " | ".join(row) + " |")
     text = "\n".join(out) + "\n"
     open(a.out, "w").write(text)
     print(text)

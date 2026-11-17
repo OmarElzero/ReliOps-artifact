@@ -70,6 +70,13 @@ F30 V5 queue while one to three cells were still to run. The team lead did not r
 analysis assistant.
 Nothing decided afterwards depends on it: r5.1 is pinned and the last cell runs unchanged.
 
+## Result (17 Nov 2026, 19:45; all 90 cells, earliest valid run per cell)
+
+F30 V5: diagnosis 52/90 (58%), mitigation 54/90 (60%), end-to-end 42/90 (47%); second judge (gpt-5.4) diagnosis 37/89,
+agreement 83% (kappa 0.67). **Primary test, mitigation vs F30 A: 21:7 discordant pairs, exact sign test p = 0.013 --
+significant at the pre-registered 0.05.** Secondary (uncorrected): vs STRATUS mitigation 14:8 (p = 0.29), diagnosis 18:14,
+end-to-end 14:11; vs A + T1v2 mitigation 8:5; vs A + CARDS + T1 mitigation 14:12. Full table: `results/frozen30_analysis.md`.
+
 ## 5. Risk
 
 New code goes to the frozen 30 after unit tests and the smoke gate only, without a dev-12 selection round. A smaller or
