@@ -26,7 +26,7 @@ judge and purpose cannot differ by hand):
 - `F30 V5 (plan 27)`, experiment **`Final - Frozen 30 V5 - first try`**: frozen 30 x 3 = 90 runs, arm `F30 V5`.
 
 Code: `agent/react_v3_r5`, tree hash `739ac06632b6c2e8` (sha256 over relative path and bytes of every file, `__pycache__`
-excluded), committed with this plan. Synced as `clients/reliops_v5` by `scripts/sync_agent.sh`; needs ReliOps-Lab `main`
+excluded), committed with this plan (commit `a8003fd`). Synced as `clients/reliops_v5` by `scripts/sync_agent.sh`; needs ReliOps-Lab `main`
 at `24d6dce` or later and `scripts/apply_sregym_patches.py` (registers `reliops_v5`).
 
 ## 2. Order and the smoke gate
