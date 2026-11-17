@@ -854,7 +854,10 @@ def run_stage(
                 if review_loaded_at_ask is not None:
                     feature_event("ROUTE_REVIEW", "answered", rerouted=len(_procedures_loaded) > review_loaded_at_ask)
                     review_loaded_at_ask = None
-            if FEATURES.get("D1_PREDICT") and stage == "diagnosis" and str(solution or "").strip() and d1_phase is None:
+            # r5.1: no D1 check once the wrap-up has started (time or the action cap is used up): the few calls left must
+            # go to the submission (17 Nov 07:33, storage_user_unregistered-2: D1 asked after the cap, run ended unsubmitted).
+            if FEATURES.get("D1_PREDICT") and stage == "diagnosis" and str(solution or "").strip() and d1_phase is None \
+                    and not wrap_up_sent:
                 d1_phase = "await_check"
                 feature_event("D1_PREDICT", "asked")
                 session.add_user(D1_ASK_TEXT)

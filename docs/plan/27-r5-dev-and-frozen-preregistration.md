@@ -37,6 +37,12 @@ new code (agent exit with a traceback, a loop to the step cap, a refused write p
 and the dev restarts; no frozen run starts before the gate passes. If a code fault appears during the frozen runs, the runs
 stop and the fault is reported; no silent fix.
 
+**Smoke gate result (17 Nov 09:58): one code fault found and fixed (r5.1).** A dev run (storage_user_unregistered-2)
+reached the action cap; in the wrap-up the empty-diagnosis guard, ROUTE_REVIEW and then D1 each intercepted the submit, the
+wrap-up calls ran out and the run ended unsubmitted (rc 4). Fix: D1 does not ask once the wrap-up has started. Unit test
+added (`sim/test_r5.py`, case 1c). New pin: tree `58fa167ea2ccffc8` (commit below). Dev runs made with r5.0 are relabelled
+`(r5.0)` and re-run; no frozen V5 run had started.
+
 ## 3. Comparisons (fixed now)
 
 Paired by problem and repeat on the frozen 30, exact sign test on discordant pairs, two-sided, alpha 0.05:

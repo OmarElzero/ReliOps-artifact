@@ -16,8 +16,10 @@ class R:
 
 
 def run(switches, stage, script, sweeps=None, extra=()):
-    drv, actions_mod, prompts, pkg = RS.load_agent(switches, "agent/react_v3_r5",
-                                                   {"REACT_V1_T1_WAIT_S": "0", "REACT_V1_T1_REBASE_WAIT_S": "0"})
+    envx = {"REACT_V1_T1_WAIT_S": "0", "REACT_V1_T1_REBASE_WAIT_S": "0"}
+    if os.environ.get("REACT_V1_HARD_CAP"):
+        envx["REACT_V1_HARD_CAP"] = os.environ["REACT_V1_HARD_CAP"]
+    drv, actions_mod, prompts, pkg = RS.load_agent(switches, "agent/react_v3_r5", envx)
     try:
         acts = {n: ((lambda n: (lambda **kw: actions_mod.ActionResult(f"ok {n}", "", 0)))(n), req)
                 for n, (fn, req) in actions_mod.actions_for("typed+shell").items()}
@@ -59,6 +61,16 @@ drv, out, rec, posted, s = run(["D1_PREDICT", "FLAT_ARGS"], "diagnosis",
     [J("submit", {"solution": "a"}), J("submit", {"solution": "a"})])
 ev = [r["event"] for r in rec if r.get("type") == "feature" and r.get("name") == "D1_PREDICT"]
 assert ev == ["asked", "skipped"] and out.termination_reason == "submitted"
+# 1c) r5.1: after the action cap (wrap-up) D1 must not ask; the submit goes through
+import os as _os
+_os.environ["REACT_V1_HARD_CAP"] = "2"
+drv, out, rec, posted, s = run(["D1_PREDICT", "FLAT_ARGS"], "diagnosis",
+    [J("get_pod_status", {"namespace": "ns"}), J("get_pod_status", {"namespace": "ns"}), J("get_pod_status", {"namespace": "ns"}),
+     J("submit", {"solution": "late"})])
+ev = [r["event"] for r in rec if r.get("type") == "feature" and r.get("name") == "D1_PREDICT"]
+print("D1 after cap:", ev, out.termination_reason, drv.HARD_CAP)
+assert "asked" not in ev and out.termination_reason == "submitted"
+_os.environ.pop("REACT_V1_HARD_CAP")
 print("D1: PASS")
 
 # 2) FIX_FAMILIES + T1 v2 + ADAPTIVE_WAIT: fix 1 no effect -> restore message names the config families; 3 rounds allowed
