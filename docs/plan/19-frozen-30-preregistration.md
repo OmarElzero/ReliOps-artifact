@@ -89,8 +89,10 @@ proxy is identified by machine (the cloud machine, `machine-4` in `artifact-data
   is dropped from mitigation if any valid null run passes its check; problems with no valid null run are kept and listed.
   The same file gives a stricter, not pre-registered reading: Holm over the four primary tests the frozen set has
   answered (plans 19, 25 x2, 27).
-- **Hand label:** drawn by `sim/frozen_followups.py draw-labels` from the counted cells of all six arms (earliest valid
-  run per cell) whose first-judge and gpt-5.4 verdicts differ: all of them if 40 or fewer, otherwise 40 at random with
-  seed **20261118**, fixed here before the draw. Two team members label every item separately, blind to the arm, both
+- **Hand label:** drawn in the Lab's Judge audit tab (ReliOps-Lab `main` after 18 Nov 22:50; amended at that time, still
+  before any draw): group `F30 | pooled | 40`, second judge `openai/gpt-5.4` (only runs whose two verdicts differ, drawn
+  at random, no per-problem cap), "Everyone labels every item", seed **20261118**. The pool is every stored run of the six
+  arms with both verdicts, which includes the few repeated runs of a cell, not only the counted cell.
+  `sim/frozen_followups.py draw-labels` is the fallback if the Lab tab cannot be used. Two team members label every item separately, blind to the arm, both
   verdicts and each other. Answer key per problem: SREGym's own `root_cause` text
   (`experiments/frozen30-reference-answers.json`), the text both judges compare against.
