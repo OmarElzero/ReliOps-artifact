@@ -81,3 +81,16 @@ http proxy (Lab bug). The cloud machine's ReliOps clone was pulled to `33e625d` 
 recorded commit differs). State on 17 Nov 04:35: `F30 STRATUS` 88/90 cells, 2 still missing. Which runs went through the
 proxy is identified by machine (the cloud machine, `machine-4` in `artifact-data/runs.csv`) and start time (after 16 Nov 18:43 UTC).
 
+
+## Addendum, 18 Nov 2026 (before the hand-label draw and before the calibration was analysed)
+
+- **Do-nothing calibration:** the null-agent queue `Calibration - null agent - frozen 30` (second try) finished on 18 Nov
+  about 09:11 UTC. Analysis: `sim/frozen_followups.py calibration` (the count is also in `results/frozen30_recompute.md`). A problem
+  is dropped from mitigation if any valid null run passes its check; problems with no valid null run are kept and listed.
+  The same file gives a stricter, not pre-registered reading: Holm over the four primary tests the frozen set has
+  answered (plans 19, 25 x2, 27).
+- **Hand label:** drawn by `sim/frozen_followups.py draw-labels` from the counted cells of all six arms (earliest valid
+  run per cell) whose first-judge and gpt-5.4 verdicts differ: all of them if 40 or fewer, otherwise 40 at random with
+  seed **20261118**, fixed here before the draw. Two team members label every item separately, blind to the arm, both
+  verdicts and each other. Answer key per problem: SREGym's own `root_cause` text
+  (`experiments/frozen30-reference-answers.json`), the text both judges compare against.
