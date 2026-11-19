@@ -78,7 +78,9 @@ def cells(runs: list, j2: dict):
             dup[arm] += 1
             continue
         d, m = r.get("diagnosis_judge1") == "True", r.get("mitigation") == "True"
-        d2 = j2.get(r["run_id"])
+        # A counted run with no second-judge verdict has no diagnosis text (it was never sent to the judge); the first
+        # judge failed every such run, so it counts as a second-judge fail too (one rule for Diag J2, kappa and E2E J2).
+        d2 = j2.get(r["run_id"], False)
         out[arm][key] = {"d": d, "m": m, "e": d and m, "d2": d2, "e2": (None if d2 is None else d2 and m)}
     return out, att, lost, dup
 
