@@ -96,3 +96,7 @@ proxy is identified by machine (the cloud machine, `machine-4` in `artifact-data
   `sim/frozen_followups.py draw-labels` is the fallback if the Lab tab cannot be used. Two team members label every item separately, blind to the arm, both
   verdicts and each other. Answer key per problem: SREGym's own `root_cause` text
   (`experiments/frozen30-reference-answers.json`), the text both judges compare against.
+- **Added 19 Nov 2026, 22:30, before any label was given:** the Lab's labelling page also shows a plain-language
+  brief of each problem (what broke, place, cause, what not to blame; `experiments/frozen30-problem-briefs.json`),
+  written from the reference text only. The reference text stays on the page word for word and wins where the two seem
+  to differ. Reason: two of the labellers are not Kubernetes specialists.
