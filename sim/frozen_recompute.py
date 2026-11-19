@@ -17,7 +17,13 @@ FROZEN = ("Final - Frozen 30 confirmation - first try", "Final - Frozen 30 V3 - 
 INFRA = ("quota", "RateLimit", "Max retries", "network", "Cluster not ready", "node", "judge model check",
          "before the run started", "key rejected", "ACCOUNT_STATE_INVALID", "failed to deploy")
 JUDGE2 = "openai/gpt-5.4"
-CAL_PREFIX = "Calibration - null agent - frozen 30"
+# The do-nothing calibration is the "second try" only: the "first try" (4 Nov) ran agent code that ignored NULL_AGENT, so it
+# ran as the plain v2 agent and must not be used (team log, 4 Nov 2026 noon).
+CAL_EXPERIMENT = "Calibration - null agent - frozen 30 - second try"
+# Each arm counts only inside its own frozen experiment (as sim/frozen_analysis.py); three stray rows labelled F30 A,
+# F30 B2 +FLAT and F30 STRATUS in the V3 experiment are not part of those arms.
+ARM_EXPERIMENT = {"F30 A": FROZEN[0], "F30 B2 +FLAT": FROZEN[0], "F30 STRATUS": FROZEN[0],
+                  "F30 V3 A +CARDS +T1": FROZEN[1], "F30 V3 A +T1v2": FROZEN[1], "F30 V5": FROZEN[2]}
 PRIMARY = [("plan 19: A vs base, E2E", "F30 B2 +FLAT", "e"),
            ("plan 25: A+cards+gate vs A, mitigation", "F30 V3 A +CARDS +T1", "m"),
            ("plan 25: A+driver gate vs A, mitigation", "F30 V3 A +T1v2", "m"),
@@ -61,7 +67,7 @@ def cells(runs: list, j2: dict):
     att, lost, dup = collections.Counter(), collections.Counter(), collections.Counter()
     for r in sorted(runs, key=lambda r: r.get("started_utc") or ""):
         arm = r.get("arm")
-        if r.get("experiment") not in FROZEN or arm not in out:
+        if arm not in out or r.get("experiment") != ARM_EXPERIMENT[arm]:
             continue
         att[arm] += 1
         if is_infra(r):
@@ -127,12 +133,12 @@ def report(runs: list, j2: dict) -> str:
                 b, c_, _ = paired(by["F30 V5"], by[ref], k)
                 row.append(f"{b}:{c_}, p = {sign_test(b, c_):.5f}")
             L.append("| " + " | ".join(row) + " |")
-    null = [r for r in runs if (r.get("experiment") or "").startswith(CAL_PREFIX) and not is_infra(r)]
+    null = [r for r in runs if r.get("experiment") == CAL_EXPERIMENT and not is_infra(r)]
     if null:
         probs = sorted({r["problem_id"] for r in null})
         passing = sorted({r["problem_id"] for r in null if r.get("mitigation") == "True"})
         L += ["", "## Do-nothing calibration (plan 19)", "",
-              f"{len(null)} valid null-agent runs on {len(probs)} problems; problems whose mitigation check passes with no "
+              f"`{CAL_EXPERIMENT}` (the first try ran the plain v2 agent and is excluded): {len(null)} valid null-agent runs on {len(probs)} problems; problems whose mitigation check passes with no "
               f"fix: {len(passing)}" + (f" ({', '.join(passing)})" if passing else "") + "."]
     return "\n".join(L) + "\n"
 

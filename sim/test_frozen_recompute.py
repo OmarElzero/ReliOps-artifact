@@ -35,6 +35,19 @@ class T(unittest.TestCase):
         self.assertEqual(c[("p1", "0")], {"d": False, "m": True, "e": False, "d2": True, "e2": True})
         self.assertFalse(c[("p2", "0")]["m"])  # non-infrastructure incomplete run counts as a failure
 
+    def test_arm_counts_only_in_its_own_experiment(self):
+        stray = dict(run("9", "F30 A", "p1", 0, "2026-11-16T00"), experiment="Final - Frozen 30 V3 - first try")
+        by, att, _, _ = cells([stray, run("1", "F30 A", "p1", 0, "2026-11-16T01")], {})
+        self.assertEqual(att["F30 A"], 1)
+
+    def test_calibration_uses_second_try_only(self):
+        null = [{"run_id": "n1", "experiment": "Calibration - null agent - frozen 30 - first try", "arm": "R2 NULL",
+                 "problem_id": "p1", "mitigation": "True", "incomplete_reason": ""},
+                {"run_id": "n2", "experiment": "Calibration - null agent - frozen 30 - second try", "arm": "R2 NULL",
+                 "problem_id": "p1", "mitigation": "False", "incomplete_reason": ""}]
+        text = report([run("1", "F30 A", "p1", 0, "t1")] + null, {})
+        self.assertIn("passes with no fix: 0.", text)
+
     def test_report_runs(self):
         runs = [run(str(i), a, f"p{i}", 0, f"t{i}") for i, a in enumerate(ARMS)]
         self.assertIn("Holm over the four primary tests", report(runs, {}))

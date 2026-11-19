@@ -26,7 +26,7 @@ CAL_PREFIX = "Calibration - null agent - frozen 30"
 COLUMNS = {
     "run_id": ["run_id"], "experiment": ["experiment"], "arm": ["config_label"], "problem_id": ["problem_id"],
     "repeat": ["repeat_index"], "started_utc": ["timestamp_utc"], "agent_model": ["model_id", "model", "agent_model"],
-    "judge_model": ["judge_model_id", "judge_model"], "agent_commit": ["reliops_commit", "agent_commit", "commit"],
+    "judge_model": ["judge_model_id", "judge_model"], "agent_commit": ["git_commit", "reliops_commit", "agent_commit", "commit"],
     "llm_calls": ["num_llm_calls"], "total_tokens": ["total_tokens"], "duration_s": ["duration_s"],
     "incomplete_kind": ["incomplete_kind"], "run_class": ["run_class"],
 }
@@ -108,7 +108,8 @@ def main() -> int:
         "run, including runs lost to infrastructure (see `incomplete_reason`; the infrastructure rule is `INFRA` in "
         "`sim/frozen_recompute.py`). `diagnosis_judge1` and `mitigation` are SREGym's graded outcomes (`True`/`False`, "
         "empty when the run did not reach grading). `machine` is a stable pseudonym. `incomplete_reason` is cut to 160 "
-        "characters and scrubbed.\n\n"
+        "characters and scrubbed. "
+        "The `calibration` phase holds both null-agent experiments; only `Calibration - null agent - frozen 30 - second try` is the do-nothing calibration (the first try ran agent code that ignored NULL_AGENT, i.e. the plain v2 agent; `sim/frozen_recompute.py` uses the second try only). \n\n"
         f"`second_judge.csv`: {len(rj)} second-judge verdicts (diagnosis only), keyed by `run_id`.\n\n"
         "Recompute the frozen-set table and tests: `python3 sim/frozen_recompute.py --runs artifact-data/runs.csv "
         "--judge2 artifact-data/second_judge.csv`.\n", encoding="utf-8")

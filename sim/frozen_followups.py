@@ -237,7 +237,8 @@ def main():
     if a.cmd == "calibration":
         null = [d.to_dict() for d in cl.collection("runs").where(filter=FF("experiment", ">=", CAL_PREFIX))
                 .where(filter=FF("experiment", "<", CAL_PREFIX + "")).stream()]
-        null = [r for r in null if r.get("problem_id") in problems]
+        # Only the "second try": the "first try" ran the plain v2 agent (NULL_AGENT ignored; team log, 4 Nov 2026).
+        null = [r for r in null if r.get("problem_id") in problems and r.get("experiment") == CAL_PREFIX + " - second try"]
         text = calibration_report(null, c, problems)
         (ROOT / "results" / "frozen30_null_calibration.md").write_text(text)
         print(text)
