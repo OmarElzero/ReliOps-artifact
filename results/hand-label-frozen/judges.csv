@@ -1,0 +1,41 @@
+item_id,run_id,problem_id,config_label,diagnosis_judge1,diagnosis_gpt54,lab_diagnosis_pass
+I001,5029cce4-5132-4431-aeb9-7eac5e684b97,duplicate_pvc_mounts_hotel_reservation,F30 B2 +FLAT,True,False,True
+I002,116ec587-e556-4cd6-816d-8baf76d3e199,namespace_memory_limit,F30 STRATUS,True,False,True
+I003,ead664d4-8189-4fb1-8d6b-d5b2f036b8cb,namespace_memory_limit,F30 A,True,False,True
+I004,186d8588-2ac8-4c30-895b-dfe8c0bd70f7,rolling_update_misconfigured_social_network,F30 V3 A +CARDS +T1,True,False,True
+I005,b9eb7b54-5b4a-4db7-9670-a89bc483f314,readiness_probe_misconfiguration_hotel_reservation,F30 B2 +FLAT,True,False,True
+I006,b95ef151-1e32-481c-9ac2-617323016757,taint_no_toleration_social_network,F30 B2 +FLAT,True,False,True
+I007,1c14abc5-b4f5-4e83-bf03-a9b4244a14e5,rolling_update_misconfigured_social_network,F30 B2 +FLAT,True,False,True
+I008,41bcc5c2-20f3-4fef-be59-679ae98125cf,misconfig_app_hotel_res,F30 V3 A +T1v2,True,False,True
+I009,f2745312-72f1-43fb-bb14-3cc418cfc1d7,update_incompatible_correlated,F30 V3 A +T1v2,True,False,True
+I010,4a22763d-5b62-452a-8432-06940029947f,duplicate_pvc_mounts_social_network,F30 V3 A +CARDS +T1,True,False,True
+I011,037f6952-bb0c-465b-868d-f4773bb6be6a,storage_user_unregistered-1,F30 V3 A +CARDS +T1,True,False,True
+I012,e99956bf-b162-4928-a81b-ff1eca65a8ee,readiness_probe_misconfiguration_hotel_reservation,F30 A,True,False,True
+I013,8131e0f4-254e-4ac6-a3ba-86cf3d85003d,readiness_probe_misconfiguration_hotel_reservation,F30 B2 +FLAT,True,False,True
+I014,9118e306-c451-491a-b42e-39683a14beb7,cronjob_sidecar_blocks_completion_hotel_reservation,F30 B2 +FLAT,True,False,True
+I015,79270e31-5cf3-435b-98da-448566099aaf,revoke_auth_mongodb-1,F30 V3 A +CARDS +T1,True,False,True
+I016,b4700489-7943-4fd4-9fb3-a633daa02cfb,auth_miss_mongodb,F30 B2 +FLAT,True,False,True
+I017,9d2f1a23-79cf-4a18-af44-f395eeb4a045,storage_user_unregistered-1,F30 STRATUS,True,False,True
+I018,ad70b280-8f3d-4c80-bbe3-b22737e5b0d6,latent_sector_error,F30 A,True,False,True
+I019,22103f37-caa2-4d98-b0e3-9eb8f76f6bfc,rolling_update_misconfigured_social_network,F30 A,True,False,True
+I020,3e6aaf5a-2663-4233-970d-6bed37464b1c,file_descriptor_exhaustion,F30 A,True,False,True
+I021,35272333-817f-4f1f-8237-8cbecc3ebe4b,taint_no_toleration_social_network,F30 STRATUS,True,False,True
+I022,966aed10-eff3-47ee-9413-1e6fbcf8ae60,namespace_memory_limit,F30 V3 A +CARDS +T1,True,False,True
+I023,38d54cd7-12ce-4e76-82d3-11477a47af6f,readiness_probe_misconfiguration_hotel_reservation,F30 B2 +FLAT,True,False,True
+I024,8eea6599-c438-452c-bf79-dc4f27c35128,rolling_update_misconfigured_social_network,F30 B2 +FLAT,True,False,True
+I025,b061b487-cba4-4099-8fe4-e972229f183d,rolling_update_misconfigured_social_network,F30 A,True,False,True
+I026,439a6d1c-6048-451c-bef7-60a23f1b1d88,namespace_memory_limit,F30 STRATUS,True,False,True
+I027,217c4833-a99b-42a9-b34e-63decfc97c21,duplicate_pvc_mounts_hotel_reservation,F30 V5,True,False,True
+I028,a1ad8d37-ade5-49d2-831e-f29d981fa32c,readiness_probe_misconfiguration_hotel_reservation,F30 A,True,False,True
+I029,25f0a003-431e-4c30-8535-4d53b33f805c,storage_user_unregistered-1,F30 A,True,False,True
+I030,6496e045-7d90-45c8-bcd2-475352fcf9d3,cronjob_sidecar_blocks_completion_hotel_reservation,F30 B2 +FLAT,True,False,True
+I031,70aaab62-ac52-4708-8533-1db2491c7c15,rolling_update_misconfigured_social_network,F30 STRATUS,True,False,True
+I032,1fde4436-00b1-4054-ad81-e8f69677a845,auth_miss_mongodb,F30 A,True,False,True
+I033,ebe33315-427a-4698-822b-1fd628aea576,taint_no_toleration_social_network,F30 B2 +FLAT,True,False,True
+I034,c44312b3-d1f4-445a-9649-0e729ecff9c0,missing_configmap_hotel_reservation,F30 STRATUS,True,False,True
+I035,b1dad16e-b927-4c4b-99d9-b7f7acc2f288,node_conntrack_exhaustion_hotel_reservation,F30 STRATUS,True,False,True
+I036,926543e1-9bcc-406b-bd41-7baddfe4fa4c,revoke_auth_mongodb-1,F30 V5,True,False,True
+I037,6f1671b0-c018-4ed9-97d4-32097eccb9f9,ephemeral_port_range_hotel_reservation,F30 V3 A +CARDS +T1,True,False,True
+I038,37d704a4-b7b9-44b9-8fa1-73ada5ef5f1b,missing_configmap_hotel_reservation,F30 A,True,False,True
+I039,ad4d1bb5-9d91-447a-8d06-24dc686e7fa9,cronjob_sidecar_blocks_completion_hotel_reservation,F30 V3 A +T1v2,True,False,True
+I040,b821c6b9-dd8b-4338-ac1c-5ca74cd26bdb,rolling_update_misconfigured_social_network,F30 V3 A +CARDS +T1,True,False,True

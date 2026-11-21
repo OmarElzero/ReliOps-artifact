@@ -34,6 +34,7 @@ Both read `artifact-data/runs.csv` (one row per recorded run, 3,391 rows) and `a
 | Cost, fix-gate events, example cell | `results/frozen30_paper_facts.md` |
 | Development rounds (Table II, L1-L5) | `results/r2-main-screening-2026-11-11.md`, `r3-first-try-2026-11-10.md`, `r4-interim-2026-11-12.md`, `r4-review-2026-11-14.md`, `final-r2-r3-2026-11-11.md` |
 | Development hand label (40 diagnoses) | `experiments/judge-audit/` and `results/final-r2-r3-2026-11-11.md` |
+| Held-out hand label (40 disputed frozen diagnoses, three labellers) | `results/hand-label-frozen/`: the audit plan, every label with its reason, both judges' verdicts per item, and the Lab's own score |
 | Second judge | `scripts/rejudge.py`, `scripts/rejudge_frozen.py` |
 | Changes to the benchmark | `scripts/apply_sregym_patches.py` (see `REPRODUCE.md`) |
 

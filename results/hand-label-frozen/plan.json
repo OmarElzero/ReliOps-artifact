@@ -1,0 +1,585 @@
+{
+  "anchors_per_stratum": 3,
+  "assign": "all",
+  "audit_id": "f30",
+  "created_at": "2026-11-19T20:33:33Z",
+  "created_by": "Omar Betawy",
+  "disputed_with": "openai/gpt-5.4",
+  "groups": "F30 | pooled | 40",
+  "items": [
+    {
+      "anchor": true,
+      "item_id": "I001",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "duplicate_pvc_mounts_hotel_reservation",
+      "run_id": "5029cce4-5132-4431-aeb9-7eac5e684b97",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I002",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "namespace_memory_limit",
+      "run_id": "116ec587-e556-4cd6-816d-8baf76d3e199",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I003",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "namespace_memory_limit",
+      "run_id": "ead664d4-8189-4fb1-8d6b-d5b2f036b8cb",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I004",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "rolling_update_misconfigured_social_network",
+      "run_id": "186d8588-2ac8-4c30-895b-dfe8c0bd70f7",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I005",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "readiness_probe_misconfiguration_hotel_reservation",
+      "run_id": "b9eb7b54-5b4a-4db7-9670-a89bc483f314",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I006",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "taint_no_toleration_social_network",
+      "run_id": "b95ef151-1e32-481c-9ac2-617323016757",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I007",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "rolling_update_misconfigured_social_network",
+      "run_id": "1c14abc5-b4f5-4e83-bf03-a9b4244a14e5",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I008",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "misconfig_app_hotel_res",
+      "run_id": "41bcc5c2-20f3-4fef-be59-679ae98125cf",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I009",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "update_incompatible_correlated",
+      "run_id": "f2745312-72f1-43fb-bb14-3cc418cfc1d7",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I010",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "duplicate_pvc_mounts_social_network",
+      "run_id": "4a22763d-5b62-452a-8432-06940029947f",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I011",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "storage_user_unregistered-1",
+      "run_id": "037f6952-bb0c-465b-868d-f4773bb6be6a",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I012",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "readiness_probe_misconfiguration_hotel_reservation",
+      "run_id": "e99956bf-b162-4928-a81b-ff1eca65a8ee",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I013",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "readiness_probe_misconfiguration_hotel_reservation",
+      "run_id": "8131e0f4-254e-4ac6-a3ba-86cf3d85003d",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I014",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "cronjob_sidecar_blocks_completion_hotel_reservation",
+      "run_id": "9118e306-c451-491a-b42e-39683a14beb7",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I015",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "revoke_auth_mongodb-1",
+      "run_id": "79270e31-5cf3-435b-98da-448566099aaf",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I016",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "auth_miss_mongodb",
+      "run_id": "b4700489-7943-4fd4-9fb3-a633daa02cfb",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I017",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "storage_user_unregistered-1",
+      "run_id": "9d2f1a23-79cf-4a18-af44-f395eeb4a045",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I018",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "latent_sector_error",
+      "run_id": "ad70b280-8f3d-4c80-bbe3-b22737e5b0d6",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I019",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "rolling_update_misconfigured_social_network",
+      "run_id": "22103f37-caa2-4d98-b0e3-9eb8f76f6bfc",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I020",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "file_descriptor_exhaustion",
+      "run_id": "3e6aaf5a-2663-4233-970d-6bed37464b1c",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I021",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "taint_no_toleration_social_network",
+      "run_id": "35272333-817f-4f1f-8237-8cbecc3ebe4b",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I022",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "namespace_memory_limit",
+      "run_id": "966aed10-eff3-47ee-9413-1e6fbcf8ae60",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I023",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "readiness_probe_misconfiguration_hotel_reservation",
+      "run_id": "38d54cd7-12ce-4e76-82d3-11477a47af6f",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I024",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "rolling_update_misconfigured_social_network",
+      "run_id": "8eea6599-c438-452c-bf79-dc4f27c35128",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I025",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "rolling_update_misconfigured_social_network",
+      "run_id": "b061b487-cba4-4099-8fe4-e972229f183d",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I026",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "namespace_memory_limit",
+      "run_id": "439a6d1c-6048-451c-bef7-60a23f1b1d88",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I027",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "duplicate_pvc_mounts_hotel_reservation",
+      "run_id": "217c4833-a99b-42a9-b34e-63decfc97c21",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I028",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "readiness_probe_misconfiguration_hotel_reservation",
+      "run_id": "a1ad8d37-ade5-49d2-831e-f29d981fa32c",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I029",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "storage_user_unregistered-1",
+      "run_id": "25f0a003-431e-4c30-8535-4d53b33f805c",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I030",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "cronjob_sidecar_blocks_completion_hotel_reservation",
+      "run_id": "6496e045-7d90-45c8-bcd2-475352fcf9d3",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I031",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "rolling_update_misconfigured_social_network",
+      "run_id": "70aaab62-ac52-4708-8533-1db2491c7c15",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I032",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "auth_miss_mongodb",
+      "run_id": "1fde4436-00b1-4054-ad81-e8f69677a845",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I033",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "taint_no_toleration_social_network",
+      "run_id": "ebe33315-427a-4698-822b-1fd628aea576",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I034",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "missing_configmap_hotel_reservation",
+      "run_id": "c44312b3-d1f4-445a-9649-0e729ecff9c0",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I035",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "node_conntrack_exhaustion_hotel_reservation",
+      "run_id": "b1dad16e-b927-4c4b-99d9-b7f7acc2f288",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I036",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "revoke_auth_mongodb-1",
+      "run_id": "926543e1-9bcc-406b-bd41-7baddfe4fa4c",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I037",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "ephemeral_port_range_hotel_reservation",
+      "run_id": "6f1671b0-c018-4ed9-97d4-32097eccb9f9",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I038",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "missing_configmap_hotel_reservation",
+      "run_id": "37d704a4-b7b9-44b9-8fa1-73ada5ef5f1b",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I039",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "cronjob_sidecar_blocks_completion_hotel_reservation",
+      "run_id": "ad4d1bb5-9d91-447a-8d06-24dc686e7fa9",
+      "stratum": "F30 pooled"
+    },
+    {
+      "anchor": true,
+      "item_id": "I040",
+      "labelers": [
+        "Omar Betawy",
+        "Anoud",
+        "Zeinab",
+        "Noura",
+        "Ahmed"
+      ],
+      "problem_id": "rolling_update_misconfigured_social_network",
+      "run_id": "b821c6b9-dd8b-4338-ac1c-5ca74cd26bdb",
+      "stratum": "F30 pooled"
+    }
+  ],
+  "labelers": [
+    "Omar Betawy",
+    "Anoud",
+    "Zeinab",
+    "Noura",
+    "Ahmed"
+  ],
+  "name": "F30",
+  "notes": [
+    "F30 pooled: 40 drawn from 108 eligible (40 judged pass, 0 judged fail)"
+  ],
+  "overlap_problems": 1,
+  "seed": 20261118,
+  "updated_at": "2026-11-19T20:33:33Z"
+}

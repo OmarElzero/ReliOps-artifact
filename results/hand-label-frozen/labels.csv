@@ -1,0 +1,121 @@
+item_id,labeler,d1,d2,d3,overall_correct,confidence,reason,used_story,saved_at
+I001,Anoud,True,True,False,True,3,The agent states : Since there are only a limited number of worker nodes so he blamed the lack of nodes,False,2026-11-20T20:56:07Z
+I001,Noura,True,True,True,True,3,,False,2026-11-20T14:11:00Z
+I001,Omar Betawy,True,True,True,True,3,,False,2026-11-21T00:03:46Z
+I002,Anoud,True,True,True,True,3,,False,2026-11-20T21:26:56Z
+I002,Noura,True,True,True,True,3,,False,2026-11-20T14:58:11Z
+I002,Omar Betawy,True,True,True,True,3,"Names the memory-limit-quota ResourceQuota and the search deployment, whose container lacks the memory declaration the quota requires",False,2026-11-21T04:08:56Z
+I003,Anoud,True,True,False,True,3,Blames capacity,False,2026-11-20T21:27:44Z
+I003,Noura,True,True,True,True,3,,False,2026-11-20T14:58:53Z
+I003,Omar Betawy,True,True,True,True,2,"Names memory-limit-quota and the search container lacking memory requests/limits, but the “capacity constraints” wording is loose, though it never blames node memory",False,2026-11-21T04:09:11Z
+I004,Anoud,True,False,False,False,2,"they omit the rollout configuration (maxUnavailable=100%, maxSurge=0)",False,2026-11-20T22:05:17Z
+I004,Noura,False,False,False,False,3,Doesn't know the cause and only saw half the symptoms.,False,2026-11-20T15:46:25Z
+I004,Omar Betawy,True,False,False,False,2,"Names custom-service and the hang-init sleep infinity, but never mentions the maxUnavailable=100% / maxSurge=0 rollout strategy, so it names only one of the two parts",False,2026-11-21T04:25:30Z
+I005,Anoud,True,True,True,True,3,,False,2026-11-20T21:35:36Z
+I005,Noura,True,False,True,False,2,Thinks the problem is a wrong port but doesn't know the page doesn't exist.,False,2026-11-20T15:38:10Z
+I005,Omar Betawy,True,True,True,True,2,"Names the frontend readiness probe pointed at port 8080 so pods stay NotReady, but never mentions /healthz",False,2026-11-21T04:11:31Z
+I006,Anoud,True,True,True,True,2,,False,2026-11-20T22:21:09Z
+I006,Noura,True,True,True,True,3,,False,2026-11-20T16:18:17Z
+I006,Omar Betawy,True,True,True,True,3,Names user-service pods Pending because the nodes carry the sre-fault: blocked taint and the pods have no matching toleration; no capacity blamed,False,2026-11-21T04:21:34Z
+I007,Anoud,True,False,False,False,2,"they omit the rollout configuration (maxUnavailable=100%, maxSurge=0) also didn't mention rollout startegy",False,2026-11-20T22:07:16Z
+I007,Noura,False,False,False,False,3,Doesn't know the cause and only saw half the symptoms.,False,2026-11-20T15:46:53Z
+I007,Omar Betawy,True,False,False,False,2,"Names custom-service and the hanging init container, but misses the rollout strategy that drains all old pods",False,2026-11-21T04:25:43Z
+I008,Anoud,True,False,False,False,2,He didn't mention that the connection is on the wrong port specifically,False,2026-11-20T21:23:26Z
+I008,Noura,True,True,True,True,3,It didn't state that the port mismatch was the issue but the logs reveal it did find the problem in ports.,True,2026-11-20T14:47:54Z
+I008,Omar Betawy,True,False,True,False,2,"Names the geo deployment and its image, but never states the wrong mongodb-geo port (27777 instead of 27017), only “incompatible image” and a MongoDB connection failure",False,2026-11-21T04:06:26Z
+I009,Anoud,True,True,True,True,3,,False,2026-11-20T22:22:47Z
+I009,Noura,True,True,True,True,3,,False,2026-11-20T16:20:28Z
+I009,Omar Betawy,True,True,True,True,2,"Names the MongoDB database pods failing on the incompatible 8.0.14-rc0 image, but doesn’t say all six deployments were upgraded together and frames it as a featureCompatibilityVersion mismatch in the volume data",False,2026-11-21T04:20:03Z
+I010,Anoud,True,True,True,True,3,The agent states : volume node affinity and anti-affinity scheduling conflicts.,False,2026-11-20T21:03:34Z
+I010,Noura,True,True,True,True,3,,False,2026-11-20T14:13:05Z
+I010,Omar Betawy,True,True,True,True,2,"Names the jaeger deployment and the node-bound volume vs anti-affinity conflict; doesn’t blame capacity, but never mentions ReadWriteOnce.",False,2026-11-21T03:59:55Z
+I011,Anoud,False,False,False,False,2,"The expected user is missing in the refernence not the password , also it identifies geo instead of monodb-geo",False,2026-11-20T22:14:35Z
+I011,Noura,False,False,False,False,3,Found the wrong cause,False,2026-11-20T16:07:09Z
+I011,Omar Betawy,False,False,False,False,3,"Puts the fault in the geo deployment’s missing MONGODB_PASSWORD env var, but the key says the mongodb-geo database lost its user and the client’s settings are not to blame",False,2026-11-21T04:23:10Z
+I012,Anoud,True,True,True,True,3,,False,2026-11-20T21:35:53Z
+I012,Noura,True,False,True,False,2,Thinks the problem is a wrong port but doesn't know the page doesn't exist.,False,2026-11-20T15:38:23Z
+I012,Omar Betawy,True,True,True,True,3,"Names the frontend readiness probe hitting /healthz on 8080 with connection refused, so the pod never becomes ready; the app isn’t blamed",False,2026-11-21T04:11:45Z
+I013,Anoud,True,True,True,True,3,,False,2026-11-20T21:36:08Z
+I013,Noura,True,False,True,False,2,Thinks the problem is a wrong port but doesn't know the page doesn't exist.,False,2026-11-20T15:38:40Z
+I013,Omar Betawy,True,True,True,True,2,"Names the frontend readiness probe on port 8080 failing with connection refused, but never mentions /healthz",False,2026-11-21T04:11:59Z
+I014,Anoud,True,True,True,True,3,,False,2026-11-20T20:50:58Z
+I014,Noura,True,False,False,False,3,"Blames the archiver, didn't state that the jobs never finish and accumulate",False,2026-11-20T13:16:44Z
+I014,Omar Betawy,True,True,True,True,2,,False,2026-11-20T23:55:30Z
+I015,Anoud,True,False,True,False,2,الاكسيس اتسحب مش انه داخل من غير credentials,False,2026-11-20T21:46:21Z
+I015,Noura,True,True,True,True,3,,False,2026-11-20T15:41:00Z
+I015,Omar Betawy,True,False,True,False,2,"Names mongodb-geo and the authorization error, but blames missing credentials in geo’s config instead of access being explicitly revoked on the database",False,2026-11-21T04:19:17Z
+I016,Anoud,True,True,True,True,3,All the 3 match,False,2026-11-20T20:48:48Z
+I016,Noura,True,True,True,True,3,,False,2026-11-20T12:59:31Z
+I016,Omar Betawy,True,True,True,True,2,"it mentioned the right place, for the cause i'm a bit unsure , the cause is he certificate setup of a TLS-required MongoDB is invalid, so clients' TLS handshakes fail , and the agent said that he cannot read it  which causing this , so i think he also might think it's a path issue , he mentioned something leads to  the final diganose but he might take a wrong fix because he thought something else",False,2026-11-19T22:08:41Z
+I017,Anoud,False,False,False,False,2,"also incorrect credentials from the client , mentioned geo microservice instead of mongodb geo",False,2026-11-20T22:18:25Z
+I017,Noura,False,False,False,False,2,Thinks the problem is in the service credentials not the database,False,2026-11-20T16:16:25Z
+I017,Omar Betawy,False,False,False,False,2,"Blames geo connecting without or with wrong credentials, instead of the expected user missing from mongodb-geo; it only mentions the database as the auth target",False,2026-11-21T04:23:32Z
+I018,Anoud,True,True,False,True,3,Claimed that deleting the pod will solve the problem,False,2026-11-20T21:11:33Z
+I018,Noura,True,True,True,True,2,,False,2026-11-20T14:42:26Z
+I018,Omar Betawy,True,True,True,True,2,"Names mongodb-geo and the unreadable data file (WiredTiger read error) crashing mongod at start, but says “corruption” rather than latent sector errors on the storage",False,2026-11-21T04:05:40Z
+I019,Anoud,True,False,False,False,3,"they omit the rollout configuration (maxUnavailable=100%, maxSurge=0) also didn't mention rollout startegy",False,2026-11-20T22:07:26Z
+I019,Noura,False,False,False,False,3,Doesn't know the cause and only saw half the symptoms.,False,2026-11-20T15:47:15Z
+I019,Omar Betawy,True,False,False,False,2,"Names custom-service and hang-init keeping pods in Init, but no mention of the rollout strategy removing all old pods",False,2026-11-21T04:26:04Z
+I020,Anoud,True,True,True,True,3,,False,2026-11-20T21:07:20Z
+I020,Noura,True,True,True,True,3,,False,2026-11-20T14:19:32Z
+I020,Omar Betawy,True,False,False,False,2,"Names frontend and the open-file limit, but claims the ulimit fails for lack of SYS_RESOURCE, when the real cause is that the 1024 limit is simply too low for ~1,100 connections",False,2026-11-21T04:01:22Z
+I021,Anoud,True,True,True,True,2,,False,2026-11-20T22:21:39Z
+I021,Noura,True,True,True,True,3,,False,2026-11-20T16:18:43Z
+I021,Omar Betawy,True,True,True,True,3,"Names user-service lacking a toleration for the sre-fault=blocked:NoSchedule taint on the nodes, so it stays Pending; no capacity blamed",False,2026-11-21T04:21:32Z
+I022,Anoud,True,True,True,True,3,Matches reference,False,2026-11-20T21:28:18Z
+I022,Noura,True,True,True,True,3,,False,2026-11-20T14:59:18Z
+I022,Omar Betawy,True,True,True,True,3,"Names the search deployment and the memory-limit-quota ResourceQuota that requires memory, which the container omits",False,2026-11-21T04:09:28Z
+I023,Anoud,True,True,False,True,2,,False,2026-11-21T04:28:45Z
+I023,Noura,True,False,True,False,2,Thinks the problem is a wrong port but doesn't know the page doesn't exist.,False,2026-11-20T15:39:03Z
+I023,Omar Betawy,True,True,False,True,2,"Names the frontend readiness probe misconfigured to the wrong port, but says port 80 where the key says 8080, which contradicts the key",False,2026-11-21T04:12:12Z
+I024,Anoud,True,False,False,False,2,"they omit the rollout configuration (maxUnavailable=100%, maxSurge=0) also didn't mention rollout startegy",True,2026-11-20T22:08:29Z
+I024,Noura,False,False,False,False,3,Doesn't know the cause and only saw half the symptoms.,False,2026-11-20T15:47:29Z
+I024,Omar Betawy,True,False,False,False,2,"Names custom-service and the hang-init sleep infinity, but only the init container, not the rollout settings",False,2026-11-21T04:26:21Z
+I025,Anoud,True,False,False,False,3,"they omit the rollout configuration (maxUnavailable=100%, maxSurge=0) also didn't mention rollout startegy",False,2026-11-20T22:08:43Z
+I025,Noura,False,False,False,False,3,Doesn't know the cause and only saw half the symptoms.,False,2026-11-20T15:47:44Z
+I025,Omar Betawy,True,False,False,False,2,"Names custom-service and hang-init blocking the main container, but omits maxUnavailable=100% / maxSurge=0",False,2026-11-21T04:26:34Z
+I026,Anoud,True,True,True,True,3,,False,2026-11-20T21:28:49Z
+I026,Noura,True,True,True,True,3,,False,2026-11-20T15:01:05Z
+I026,Omar Betawy,True,True,True,True,3,"Names memory-limit-quota and the search container missing memory requests/limits, so the ReplicaSet can’t create pods; no node shortage blamed",False,2026-11-21T04:09:43Z
+I027,Anoud,True,False,False,False,3,The agent mentioned that the root cause is :worker nodes and persistent volume constraints so the root cause is wrong and he blamed the resources,False,2026-11-20T20:58:36Z
+I027,Noura,True,True,True,True,3,,True,2026-11-20T14:11:46Z
+I027,Omar Betawy,True,True,True,True,3,,False,2026-11-21T00:04:26Z
+I028,Anoud,True,True,True,True,2,,False,2026-11-20T21:38:30Z
+I028,Noura,True,False,True,False,2,Thinks the problem is a wrong port but doesn't know the page doesn't exist.,False,2026-11-20T15:39:27Z
+I028,Omar Betawy,True,True,True,True,2,"Names the frontend readiness probe on 8080 failing with connection refused so the pod stays unready, but never mentions /healthz",False,2026-11-21T04:12:27Z
+I029,Anoud,False,False,False,False,2,Client credentials are blamed,False,2026-11-20T22:20:29Z
+I029,Noura,False,False,False,False,2,Thinks the problem is in the service credentials not the database,False,2026-11-20T16:17:00Z
+I029,Omar Betawy,False,False,False,False,3,"Blames the geo deployment for not providing credentials to an --auth database, rather than the user missing inside mongodb-geo, which is client-side blame the key rules out",False,2026-11-21T04:24:01Z
+I030,Anoud,True,True,True,True,3,,False,2026-11-20T20:51:36Z
+I030,Noura,True,False,True,False,2,It says the pod can't get into ready state but the problem is the pod can't terminate.,False,2026-11-20T13:24:38Z
+I030,Omar Betawy,True,True,True,True,1,"Names the CronJob and the never-exiting sidecar; doesn’t blame archiver. But explains it as a readiness problem and says the job completes, missing that the Jobs never finish and pile up.",False,2026-11-20T23:55:27Z
+I031,Anoud,True,False,False,False,3,"they omit the rollout configuration (maxUnavailable=100%, maxSurge=0) also didn't mention rollout startegy",False,2026-11-20T22:08:51Z
+I031,Noura,False,False,False,False,3,Doesn't know the cause and only saw half the symptoms.,False,2026-11-20T15:48:01Z
+I031,Omar Betawy,True,False,False,False,2,"Names custom-service and hang-init leaving pods in Init:0/1, but never mentions the rollout strategy",False,2026-11-21T04:26:52Z
+I032,Anoud,True,True,True,True,3,,False,2026-11-20T20:49:38Z
+I032,Noura,True,True,True,True,3,,False,2026-11-20T13:00:34Z
+I032,Omar Betawy,True,True,True,True,2,"also the same , right place and cause but the cause could mean many things that lead to the same dignaose but to diffrent fix",False,2026-11-19T22:12:44Z
+I033,Anoud,True,True,True,True,3,,False,2026-11-20T22:22:05Z
+I033,Noura,True,True,True,True,3,,False,2026-11-20T16:19:12Z
+I033,Omar Betawy,True,True,True,True,1,"Names user-service and the untolerated sre-fault taint, but hedges with “or conflicting ReplicaSets/deployments”, which is vague and not in the key",False,2026-11-21T04:21:49Z
+I034,Anoud,True,True,True,True,3,Matched the reference exactly,False,2026-11-20T21:24:20Z
+I034,Noura,True,True,True,True,3,,False,2026-11-20T14:50:52Z
+I034,Omar Betawy,True,True,True,True,2,"Names the mongodb-geo deployment and the missing ConfigMap (mongo-geo-script) its pod needs, so it stays in ContainerCreating",False,2026-11-21T04:07:14Z
+I035,Anoud,False,True,True,False,2,The agent doesn't mention  The victim node's nf_conntrack at all,False,2026-11-20T21:34:58Z
+I035,Noura,True,True,True,True,3,It diagnosed correctly but also knows that the fault was artificially injected😂,False,2026-11-20T15:05:27Z
+I035,Omar Betawy,True,False,True,False,2,": Names edge-traffic-client and its many TCP connections to rpc-gateway, but blames CPU consumption and a load spike instead of the node’s nf_conntrack table filling up, which is the actual mechanism",False,2026-11-21T04:10:16Z
+I036,Anoud,True,False,False,False,3,بيقول برضو مشكله auth مش ان الاكسيس revoked  وكمان بيقول ان البود هتكراش,False,2026-11-20T21:48:41Z
+I036,Noura,True,True,False,True,3,,False,2026-11-20T15:42:26Z
+I036,Omar Betawy,True,False,False,False,2,"Names mongodb-geo and the authorization error, but blames --auth with no client credentials rather than revoked access, and claims a CrashLoopBackOff when the key says the service starts normally",False,2026-11-21T04:19:32Z
+I037,Anoud,True,True,True,True,3,"Agent mentioned :. As a result, connection attempts fail with socket errors  so it identifies the cause and not blaming the backend",False,2026-11-20T21:06:41Z
+I037,Noura,True,True,True,True,3,,False,2026-11-20T14:16:15Z
+I037,Omar Betawy,True,True,True,True,2,Names the pod template’s net.ipv4.ip_local_port_range set to 32000-32003 (4 ports) as the cause of failed outbound connections; doesn’t blame the backends.,False,2026-11-21T04:01:02Z
+I038,Anoud,True,True,True,True,3,Matched reference also,False,2026-11-20T21:25:05Z
+I038,Noura,True,True,True,True,3,,False,2026-11-20T14:51:09Z
+I038,Omar Betawy,True,True,True,True,3,Names the mongodb-geo deployment and the missing ConfigMap mongo-geo-script as the cause of the failed volume mount,False,2026-11-21T04:07:29Z
+I039,Anoud,True,True,True,True,3,,False,2026-11-20T20:53:12Z
+I039,Noura,True,False,True,False,2,Found the symptoms but didn't state the cause clearly.,False,2026-11-20T13:32:10Z
+I039,Omar Betawy,False,False,False,False,3,"Blames the archiver exiting; the real cause is the sidecar that never exits, so Jobs never complete. Archiver is the “not to blame” component.",False,2026-11-20T23:55:27Z
+I040,Anoud,True,False,False,False,3,"they omit the rollout configuration (maxUnavailable=100%, maxSurge=0) also didn't mention rollout startegy",False,2026-11-20T22:09:02Z
+I040,Noura,False,False,False,False,3,Doesn't know the cause and only saw half the symptoms.,False,2026-11-20T15:48:16Z
+I040,Omar Betawy,True,False,False,False,2,"ames custom-service and hang-init stuck in PodInitializing, but misses the rollout settings (and calls sleep 3600 “infinite”)",False,2026-11-21T04:27:14Z
